@@ -1,0 +1,13 @@
+{
+  "name": "Barokah Farm — Kambing, Domba, Aqiqah & Qurban",
+  "short_name": "Barokah Farm",
+  "start_url": "/?utm_source=homescreen",
+  "display": "standalone",
+  "background_color": "#F4F6EF",
+  "theme_color": "#1E4A2C",
+  "lang": "id",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

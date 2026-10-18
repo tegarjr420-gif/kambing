@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Barokah Farm — Katalog Kambing & Domba, Curug Tangerang</title>
 <meta name="description" content="Katalog kambing, domba, paket aqiqah, dan paket qurban Barokah Farm di Binong, Curug, Tangerang. Lihat berat, harga, dan stok, lalu pesan lewat WhatsApp. Gratis ongkir Jabodetabek.">
 <meta property="og:title" content="Barokah Farm — Katalog Kambing & Domba">
@@ -11,6 +11,9 @@
 <meta name="theme-color" content="#1E4A2C">
 <link rel="icon" href="img/favicon-64.png" type="image/png">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Barokah Farm">
+<meta name="mobile-web-app-capable" content="yes">
 <meta property="og:url" content="https://barokahfarm.pages.dev/">
 <meta property="og:image" content="https://barokahfarm.pages.dev/img/og.jpg">
 <meta property="og:image:width" content="1200">
@@ -27,7 +30,7 @@
 <header class="top">
   <div class="wrap top-in">
     <a class="brand" href="#" aria-label="Barokah Farm, ke atas">
-      <img class="brand-ic" src="img/logo-bf.png" alt="" width="52" height="52">
+      <img class="brand-ic" src="img/logo-bf.png" alt="" width="52" height="52" fetchpriority="high">
       <span>Barokah Farm</span>
     </a>
     <nav class="nav" aria-label="Menu">
@@ -132,10 +135,10 @@
           <label class="sort">
             <span class="sr">Urutkan</span>
             <select id="sort">
-              <option value="urut">Urutan katalog</option>
-              <option value="murah">Harga termurah</option>
-              <option value="mahal">Harga termahal</option>
-              <option value="rating">Rating tertinggi</option>
+              <option value="urut">Rekomendasi</option>
+              <option value="murah">Termurah</option>
+              <option value="mahal">Termahal</option>
+              <option value="rating">Rating terbaik</option>
             </select>
           </label>
         </div>
@@ -430,7 +433,7 @@
   <symbol id="ic-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
 </svg>
 
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script src="config.js" defer></script>
+<script src="app.js" defer></script>
 </body>
 </html>

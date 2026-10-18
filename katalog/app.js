@@ -253,7 +253,8 @@
   const btnLabel = (p) => habis(p) ? "Kabari saya kalau ada stok"
     : (punyaOpsi(p) ? ((p.opsi.find((x) => +x.ekor === (PILIH[p.kode] || 1)) || {}).harga ? "Pesan lewat WhatsApp" : "Tanya harga lewat WhatsApp")
       : hargaNow(p) ? "Pesan lewat WhatsApp" : "Tanya harga lewat WhatsApp");
-  const btn = (p, id = "") => `<a class="btn ${habis(p) ? "btn-ghost" : "btn-wa"} btn-block"${id ? ` id="${id}"` : ""} data-wa="${esc(p.kode)}" href="${wa(msgPesan(p))}" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#ic-wa"/></svg><span>${btnLabel(p)}</span></a>`;
+  const btnShort = (p) => { const l = btnLabel(p); return l.startsWith("Kabari") ? "Kabari saya" : l.startsWith("Tanya") ? "Tanya harga" : "Pesan"; };
+  const btn = (p, kartu = false) => `<a class="btn ${habis(p) ? "btn-ghost" : "btn-wa"} btn-block" data-wa="${esc(p.kode)}" href="${wa(msgPesan(p))}" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#ic-wa"/></svg>${kartu ? `<span class="l-long">${btnLabel(p)}</span><span class="l-short">${btnShort(p)}</span>` : `<span>${btnLabel(p)}</span>`}</a>`;
   const sub = (p) => [p.ras && !p.nama.toLowerCase().includes(p.ras.toLowerCase()) ? p.ras : null, p.kelamin].filter(Boolean).join(", ");
 
   function card(p) {
@@ -276,8 +277,9 @@
         ${b || dihitung(p) ? `<p class="c-meta">${b ? `<span class="berat"><svg aria-hidden="true"><use href="#ic-scale"/></svg>${b}</span>` : ""}${stokRow(p)}</p>` : ""}
         ${ratingRow(p)}
         ${opsiChips(p)}
+        ${punyaOpsi(p) ? `<p class="opsi-mini">Pilih 1–${p.opsi.length} ekor</p>` : ""}
         ${priceBlock(p)}
-        ${btn(p)}
+        ${btn(p, true)}
       </div>
     </article>`;
   }
