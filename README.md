@@ -6,6 +6,20 @@ Sistem penjualan kambing Barokah Farm, dibuat oleh [Otomaya](https://otomaya.pag
 |---|---|
 | `katalog/` | Website katalog statis (HTML/CSS/JS, tanpa build). Siap di-hosting di Cloudflare Pages. |
 | `supabase/schema.sql` | Skema database: kambing, pesanan/DP, riwayat harga, testimoni, status percakapan. |
+| `n8n/` | Kode workflow n8n (SDK): CS WhatsApp, Kirim Teks WA, Kirim Pesan Sistem, Jadwal DP. |
+| `railway/` | Railway Function untuk memasang webhook WAHA → n8n. |
+
+## Alur sistem
+
+```
+Pembeli WA ──► WAHA (Railway) ──webhook──► n8n "Kambing — CS WhatsApp"
+                                              │  ├─ Supabase RPC bot_masuk (catat + konteks)
+                                              │  ├─ Gemini: jawab sesuai SOP, tahan kambing, simpan alamat
+                                              │  ├─ Gambar → Gemini baca bukti → Storage → teruskan ke admin
+                                              │  └─ Admin: perintah bebas → Gemini → konfirmasi YA → admin_aksi
+n8n "Kambing — Jadwal DP" (tiap 5 menit) ──► jadwal_cek: lepas tahan 60 mnt, pengingat H-1, DP hangus
+Katalog (Cloudflare Pages) ──► Supabase view `katalog` (hanya baca)
+```
 
 ## Pasang katalog di Cloudflare Pages
 
