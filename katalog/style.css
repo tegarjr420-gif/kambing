@@ -53,8 +53,9 @@ p{margin:0}
 .top{position:sticky;top:0;z-index:20;background:rgba(244,246,239,.92);backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--garis)}
 .top-in{display:flex;align-items:center;gap:20px;min-height:66px}
 .brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font:800 21px/1 var(--f-head);color:var(--rumput)}
-.brand-ic{width:34px;height:34px;color:var(--rumput)}
-.brand-light{color:#fff}.brand-light .brand-ic{color:var(--tinta)}
+.brand-ic{width:52px;height:52px;border-radius:50%}
+.brand-ic-lg{width:64px;height:64px}
+.brand-light{color:#fff;font-size:24px}
 .nav{display:flex;gap:4px;margin-left:auto}
 .nav a{text-decoration:none;font-weight:600;font-size:15px;padding:8px 12px;border-radius:999px;color:var(--abu)}
 .nav a:hover{color:var(--rumput);background:rgba(30,74,44,.07)}
@@ -163,8 +164,8 @@ p{margin:0}
 .r2{inset:0;border:2px dashed #9DB59F;background:#EDF2E7}
 .r1{inset:22%;border:2px solid var(--daun);background:#DCEAD8}
 .r1 span{background:#DCEAD8}
-.core{position:absolute;inset:41%;display:grid;place-items:center;background:var(--putih);border-radius:50%;border:2px solid var(--rumput)}
-.core svg{width:58%;height:58%;color:var(--tinta)}
+.core{position:absolute;inset:36%;border-radius:50%;box-shadow:0 6px 18px -6px rgba(30,74,44,.5)}
+.core img{width:100%;height:100%}
 .rules{list-style:none;margin:0;padding:0;display:grid;gap:12px}
 .rules li{display:flex;flex-direction:column;gap:2px;padding:18px 22px;background:var(--putih);border:1px solid var(--garis);border-radius:var(--r-md);border-left:6px solid var(--daun)}
 .rules li:nth-child(2){border-left-color:#9DB59F}
@@ -241,3 +242,4 @@ p{margin:0}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--tinta);color:#fff;padding:12px 18px;border-radius:999px;font-weight:600;font-size:15px;opacity:0;pointer-events:none;transition:.2s;z-index:40}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .facts a{color:var(--rumput);text-underline-offset:3px}
+@media (max-width:520px){.hero h1 br{display:none}}
