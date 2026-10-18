@@ -40,10 +40,14 @@ Semua pengaturan ada di `katalog/config.js`: nomor WhatsApp CS, alamat, jam buka
 batas pelunasan, mode Iduladha (`iduladha: true/false`), dan tautan Otomaya.
 
 ### Sumber data stok
-- **Sekarang:** `katalog/data/kambing.json` berisi **data contoh** (ada tanda "Ini data contoh" di halaman).
-- **Nanti:** isi `supabaseUrl` dan `supabaseAnonKey` di `config.js`. Katalog lalu membaca view `katalog` di Supabase,
+- Katalog membaca view `katalog_produk` dan `ulasan_publik` di Supabase (`supabaseUrl` dan `supabaseAnonKey` di `config.js`),
   yang otomatis diperbarui oleh bot WhatsApp (tambah kambing, ubah harga, DP, terjual). Halaman memuat ulang stok tiap 60 detik.
 - Anon key aman ditaruh di website: website hanya bisa membaca view publik, tanpa data pembeli.
 
-### Tautan langsung ke satu kambing
-`https://<domain>/#BF-07` langsung membuka detail kambing BF-07. Bot bisa mengirim tautan ini ke pembeli.
+### Tautan langsung ke satu produk
+`https://<domain>/#K-01` langsung membuka detail produk K-01. Bot bisa mengirim tautan ini ke pembeli.
+
+### Kode produk
+Katalog dijual per kelas: `K-xx` kambing, `D-xx` domba, `AQ-xx` paket aqiqah (harga per pilihan 1–10 ekor),
+`QP-xx` qurban paket, `QK-xx` qurban kelas. Admin mengatur stok, harga, flash sale, dan ulasan lewat WhatsApp
+(ketik `bantuan` dari nomor admin). Pesanan pembeli memakai nomor pesanan (`OK 12`, `lunas 12`).
