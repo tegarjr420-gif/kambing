@@ -197,6 +197,10 @@
     const list = visible();
     $("#grid").innerHTML = list.map(card).join("");
     $("#empty").hidden = list.length > 0;
+    const kosong = ALL.length === 0;
+    $("#empty p b").textContent = kosong ? "Stok sedang diperbarui." : "Belum ada yang cocok dengan pilihanmu.";
+    $("#empty p + p").textContent = kosong ? "Kambing dan domba baru akan tampil di sini. Tanya admin untuk stok terbaru, atau datang langsung ke kandang." : "Coba hapus saringan, atau tanya admin untuk stok lainnya.";
+    $("#reset").hidden = kosong;
   }
   function renderMeta() {
     const n = ALL.filter(isOpen).length;
