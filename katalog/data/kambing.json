@@ -1,0 +1,14 @@
+{
+  "contoh": true,
+  "catatan": "DATA CONTOH untuk melihat tampilan. Ganti dengan stok asli atau sambungkan Supabase di config.js.",
+  "kambing": [
+    { "kode": "BF-01", "jenis": "Kambing", "ras": "Jawa", "kelamin": "Jantan", "berat_kg": 32, "umur_bulan": 18, "harga": 3250000, "status": "tersedia", "layak_kurban": true, "foto": [], "catatan": "", "updated_at": "2026-10-18T09:00:00+07:00" },
+    { "kode": "BF-02", "jenis": "Kambing", "ras": "Etawa", "kelamin": "Jantan", "berat_kg": 41, "umur_bulan": 22, "harga": 4600000, "status": "tersedia", "layak_kurban": true, "foto": [], "catatan": "", "updated_at": "2026-10-18T09:00:00+07:00" },
+    { "kode": "BF-03", "jenis": "Domba", "ras": "Garut", "kelamin": "Jantan", "berat_kg": 36, "umur_bulan": 16, "harga": 3900000, "status": "dp", "layak_kurban": true, "foto": [], "catatan": "", "updated_at": "2026-10-18T09:00:00+07:00" },
+    { "kode": "BF-04", "jenis": "Kambing", "ras": "Jawa", "kelamin": "Betina", "berat_kg": 25, "umur_bulan": 14, "harga": 2300000, "status": "tersedia", "layak_kurban": true, "foto": [], "catatan": "", "updated_at": "2026-10-18T09:00:00+07:00" },
+    { "kode": "BF-05", "jenis": "Domba", "ras": "Ekor Gemuk", "kelamin": "Betina", "berat_kg": 28, "umur_bulan": 13, "harga": 2750000, "status": "tersedia", "layak_kurban": true, "foto": [], "catatan": "", "updated_at": "2026-10-18T09:00:00+07:00" },
+    { "kode": "BF-06", "jenis": "Kambing", "ras": "Kacang", "kelamin": "Jantan", "berat_kg": 20, "umur_bulan": 9, "harga": 1850000, "status": "ditahan", "layak_kurban": false, "foto": [], "catatan": "", "updated_at": "2026-10-18T09:00:00+07:00" },
+    { "kode": "BF-07", "jenis": "Domba", "ras": "Garut", "kelamin": "Jantan", "berat_kg": 45, "umur_bulan": 24, "harga": 5200000, "status": "tersedia", "layak_kurban": true, "foto": [], "catatan": "", "updated_at": "2026-10-18T09:00:00+07:00" },
+    { "kode": "BF-08", "jenis": "Kambing", "ras": "Jawa", "kelamin": "Jantan", "berat_kg": 29, "umur_bulan": 15, "harga": 2950000, "status": "tersedia", "layak_kurban": true, "foto": [], "catatan": "", "updated_at": "2026-10-18T09:00:00+07:00" }
+  ]
+}
