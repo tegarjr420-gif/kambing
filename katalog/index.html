@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Barokah Farm — Katalog Kambing & Domba, Curug Tangerang</title>
-<meta name="description" content="Katalog kambing dan domba Barokah Farm di Binong, Curug, Tangerang. Lihat foto, berat, dan harga, lalu pesan lewat WhatsApp. Gratis ongkir Jabodetabek.">
+<meta name="description" content="Katalog kambing, domba, paket aqiqah, dan paket qurban Barokah Farm di Binong, Curug, Tangerang. Lihat berat, harga, dan stok, lalu pesan lewat WhatsApp. Gratis ongkir Jabodetabek.">
 <meta property="og:title" content="Barokah Farm — Katalog Kambing & Domba">
 <meta property="og:description" content="Lihat stok kambing & domba hari ini, lalu pesan lewat WhatsApp. Gratis ongkir Jabodetabek.">
 <meta property="og:type" content="website">
@@ -48,9 +48,9 @@
       <div class="hero-copy">
         <p class="hero-place"><svg aria-hidden="true"><use href="#ic-pin"/></svg>Binong, Curug, Tangerang</p>
         <h1>Kambing &amp; domba sehat, <br>langsung dari kandang.</h1>
-        <p class="lead">Lihat foto, berat, dan harga tiap ekor di sini. Cocok, tinggal pesan lewat WhatsApp atau datang langsung ke kandang.</p>
+        <p class="lead">Lihat kelas berat, harga, dan stok hari ini, termasuk paket aqiqah dan qurban. Cocok, tinggal pesan lewat WhatsApp atau datang langsung ke kandang.</p>
         <div class="hero-cta">
-          <a class="btn btn-straw" href="#katalog">Lihat kambing yang ada</a>
+          <a class="btn btn-straw" href="#katalog">Lihat stok &amp; paket</a>
           <a class="btn btn-line js-wa" data-msg="umum" href="#" target="_blank" rel="noopener">
             <svg aria-hidden="true"><use href="#ic-wa"/></svg>Tanya lewat WhatsApp
           </a>
@@ -86,7 +86,7 @@
       <li><svg aria-hidden="true"><use href="#ic-clock"/></svg><div><b>Jam kunjungan</b><span id="f-jam"></span></div></li>
       <li><svg aria-hidden="true"><use href="#ic-truck"/></svg><div><b>Gratis ongkir</b><span><a href="#ongkir">Se-Jabodetabek</a></span></div></li>
       <li><svg aria-hidden="true"><use href="#ic-wallet"/></svg><div><b>DP mulai</b><span id="f-dp"></span></div></li>
-      <li><svg aria-hidden="true"><use href="#ic-shield"/></svg><div><b>Rekening resmi</b><span>Hanya 1, <a href="#cara-beli">lihat</a></span></div></li>
+      <li><svg aria-hidden="true"><use href="#ic-shield"/></svg><div><b>Rekening resmi</b><span>Hanya 1, <a href="#rekening">lihat</a></span></div></li>
     </ul>
   </div>
 
@@ -108,28 +108,33 @@
       </div>
 
       <div class="filters" role="group" aria-label="Saring katalog">
-        <div class="seg" role="radiogroup" aria-label="Jenis">
-          <button type="button" role="radio" aria-checked="true" data-jenis="">Semua</button>
-          <button type="button" role="radio" aria-checked="false" data-jenis="Kambing">Kambing</button>
-          <button type="button" role="radio" aria-checked="false" data-jenis="Domba">Domba</button>
+        <div class="seg-scroll">
+          <div class="seg" role="radiogroup" aria-label="Kategori">
+            <button type="button" role="radio" aria-checked="true" data-kat="">Semua</button>
+            <button type="button" role="radio" aria-checked="false" data-kat="Kambing">Kambing</button>
+            <button type="button" role="radio" aria-checked="false" data-kat="Domba">Domba</button>
+            <button type="button" role="radio" aria-checked="false" data-kat="Aqiqah"><span class="lg">Paket </span>Aqiqah</button>
+            <button type="button" role="radio" aria-checked="false" data-kat="Qurban"><span class="lg">Paket </span>Qurban</button>
+          </div>
         </div>
         <div class="chips">
-          <button type="button" class="chip" aria-pressed="false" data-kelamin="Jantan">Jantan</button>
-          <button type="button" class="chip" aria-pressed="false" data-kelamin="Betina">Betina</button>
+          <button type="button" class="chip chip-flash" aria-pressed="false" id="chip-flash" hidden><svg aria-hidden="true"><use href="#ic-bolt"/></svg>Flash sale</button>
+          <button type="button" class="chip" aria-pressed="false" id="chip-ada">Ada stok</button>
           <button type="button" class="chip" aria-pressed="false" id="chip-kurban" hidden>Layak kurban</button>
         </div>
         <div class="filter-right">
           <label class="search">
-            <span class="sr">Cari nomor kambing</span>
+            <span class="sr">Cari di katalog</span>
             <svg aria-hidden="true"><use href="#ic-search"/></svg>
-            <input id="q" type="search" inputmode="search" placeholder="Cari nomor kambing, mis. BF-07" autocomplete="off">
+            <input id="q" type="search" inputmode="search" placeholder="Cari: jawa, garut, aqiqah, K-01" autocomplete="off">
           </label>
           <label class="sort">
             <span class="sr">Urutkan</span>
             <select id="sort">
+              <option value="urut">Urutan katalog</option>
               <option value="murah">Harga termurah</option>
               <option value="mahal">Harga termahal</option>
-              <option value="berat">Paling berat</option>
+              <option value="rating">Rating tertinggi</option>
             </select>
           </label>
         </div>
@@ -159,7 +164,7 @@
           <p class="muted">Lihat dan pilih langsung kambingnya.</p></div></div>
           <ol class="steps">
             <li>Datang ke Barokah Farm jam <span class="js-jam"></span>.</li>
-            <li>Pilih kambing, sebutkan nomornya ke penjaga kandang.</li>
+            <li>Pilih kambingnya langsung, atau sebutkan kode kelas di katalog (mis. K-01) ke penjaga kandang.</li>
             <li>Bayar di tempat, kambing bisa langsung dibawa atau diantar.</li>
           </ol>
           <a class="btn btn-ghost js-maps" href="#" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#ic-pin"/></svg>Buka lokasi di Google Maps</a>
@@ -168,19 +173,19 @@
           <div class="way-head"><svg class="way-ic" aria-hidden="true"><use href="#ic-phone"/></svg><div><h3>Pesan dari rumah</h3>
           <p class="muted">Lewat WhatsApp, dibantu admin kami.</p></div></div>
           <ol class="steps">
-            <li>Klik <b>Pesan lewat WhatsApp</b> pada kambing yang kamu mau.</li>
-            <li>Bayar DP minimal <b class="js-dp"></b> ke rekening di bawah, lalu kirim foto bukti transfernya.</li>
-            <li>Admin mengecek transfer. Setelah dikonfirmasi, kambing ditandai <b>Sudah di-DP</b> atas namamu.</li>
+            <li>Klik <b>Pesan lewat WhatsApp</b> pada kelas atau paket yang kamu mau, sebutkan jumlah ekornya.</li>
+            <li>Bayar DP minimal <b class="js-dp"></b> per ekor ke rekening di bawah, lalu kirim foto bukti transfernya.</li>
+            <li>Admin mengecek transfer. Setelah dikonfirmasi, pesananmu dicatat atas namamu dan stoknya disisihkan.</li>
             <li>Lunasi paling lambat <b class="js-hari"></b> setelah DP dikonfirmasi. Kami ingatkan sehari sebelumnya.</li>
             <li>Lunas, kambing diantar atau diambil.</li>
           </ol>
-          <div class="rek">
+          <div class="rek" id="rekening" tabindex="-1">
             <div class="rek-txt">
               <span class="rek-lbl"><svg aria-hidden="true"><use href="#ic-shield"/></svg>Transfer hanya ke rekening ini</span>
               <b class="rek-no" id="rek-no"></b>
               <span class="rek-nama" id="rek-nama"></span>
             </div>
-            <button type="button" class="btn btn-sm btn-straw" id="copy-rek">Salin nomor</button>
+            <button type="button" class="btn btn-sm btn-straw btn-copy" id="copy-rek"><svg aria-hidden="true"><use href="#ic-copy"/></svg><span>Salin nomor</span></button>
           </div>
           <p class="fine"><b>Batal sebelum batas pelunasan?</b> DP dikembalikan penuh. Jika lewat <span class="js-hari"></span> belum lunas, pesanan otomatis batal dan DP tidak dikembalikan, karena dipakai untuk biaya pakan dan perawatan kambing selama 1 bulan. Kami ingatkan lewat WhatsApp sehari sebelumnya.</p>
         </article>
@@ -212,11 +217,12 @@
   <section id="testimoni" class="sec sec-alt">
     <div class="wrap">
       <div class="sec-head">
-        <h2>Sudah dibawa pulang</h2>
-        <p class="muted">Foto serah terima dari pembeli kami. Wajah disamarkan untuk menjaga privasi.</p>
+        <h2>Kata pembeli</h2>
+        <p class="muted">Ulasan dari pembeli yang sudah lunas, dan foto serah terima. Wajah disamarkan untuk menjaga privasi.</p>
       </div>
+      <ul id="reviews" class="reviews" hidden></ul>
       <div id="testi" class="testi"></div>
-      <p id="testi-empty" class="empty-soft" hidden><svg aria-hidden="true"><use href="#ic-camera"/></svg>Foto serah terima pembeli akan tampil di sini.</p>
+      <p id="testi-empty" class="empty-soft" hidden><svg aria-hidden="true"><use href="#ic-camera"/></svg>Ulasan dan foto serah terima pembeli akan tampil di sini.</p>
     </div>
   </section>
 
@@ -237,12 +243,12 @@
           <p>Boleh. Datang saja ke kandang jam <span class="js-jam"></span> dan pilih langsung.</p>
         </details>
         <details>
-          <summary>Bagaimana memastikan kambing yang di foto sama dengan yang saya terima?</summary>
-          <p>Setiap kambing di katalog punya nomor sendiri, misalnya BF-07. Sebutkan nomor itu saat chat atau datang, supaya yang disiapkan adalah kambing yang sama.</p>
+          <summary>Kambing yang saya terima seperti apa?</summary>
+          <p>Katalog dibagi per kelas berat, misalnya Kambing Jawa 20–25 kg. Kambing yang disiapkan beratnya masuk rentang kelas itu. Mau pilih sendiri ekornya? Datang ke kandang atau minta foto/video ke admin sebelum DP.</p>
         </details>
         <details>
-          <summary>Apa arti label “Sudah di-DP”?</summary>
-          <p>Sudah ada pembeli yang membayar DP untuk kambing itu. Kalau tidak dilunasi dalam <span class="js-hari"></span>, kambing kembali tersedia di katalog.</p>
+          <summary>Apa itu flash sale?</summary>
+          <p>Harga khusus untuk kelas tertentu dalam waktu terbatas. Harga flash berlaku untuk pesanan yang masuk sebelum hitung mundurnya habis.</p>
         </details>
         <details>
           <summary>Apakah ada rekening lain selain yang tertulis?</summary>
@@ -286,13 +292,23 @@
     <button class="x" type="button" id="d-close" aria-label="Tutup">×</button>
     <div class="d-media" id="d-media"></div>
     <div class="d-body">
-      <div class="d-top"><span class="tag" id="d-tag"></span><span class="pill" id="d-pill"></span></div>
+      <div class="d-top"><span class="tag" id="d-tag"></span><span class="kat" id="d-kat"></span></div>
       <h3 id="d-title"></h3>
+      <p class="d-note" id="d-desc" hidden></p>
       <dl class="specs" id="d-specs"></dl>
-      <p class="d-note" id="d-note" hidden></p>
-      <p class="price" id="d-price"></p>
-      <a class="btn btn-wa btn-block" id="d-wa" href="#" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#ic-wa"/></svg><span>Pesan lewat WhatsApp</span></a>
+      <div id="d-rating"></div>
+      <div id="d-opsi"></div>
+      <div class="qty" id="d-qty" hidden>
+        <span class="qty-lbl">Jumlah</span>
+        <button type="button" id="q-min" aria-label="Kurangi">−</button>
+        <output id="q-n" aria-live="polite">1</output>
+        <button type="button" id="q-plus" aria-label="Tambah">+</button>
+        <span id="q-unit">ekor</span>
+      </div>
+      <div id="d-price"></div>
+      <div id="d-btn"></div>
       <p class="fine" id="d-fine"></p>
+      <div id="d-rev"></div>
     </div>
   </div>
 </dialog>
@@ -318,6 +334,8 @@
   <symbol id="ic-phone" viewBox="0 0 48 48"><rect x="13" y="4" width="22" height="40" rx="5" fill="#F0C24B" stroke="currentColor" stroke-width="3"/><path d="M20 38h8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M18 14h12M18 20h8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
   <symbol id="ic-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
   <symbol id="ic-scale" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 10a4 4 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m12 10 1.6-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="ic-bolt" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 2 4 13.5h6.2L9 22l10-12.5h-6.4L13.5 2Z"/></symbol>
+  <symbol id="ic-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-7A2.5 2.5 0 0 0 4 5.5v9A2.5 2.5 0 0 0 6.5 17H8" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
   <symbol id="ic-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
 </svg>
 
