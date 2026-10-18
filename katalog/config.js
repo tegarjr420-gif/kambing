@@ -23,8 +23,8 @@ window.BF_CONFIG = {
   // dari Supabase (diperbarui otomatis oleh bot WhatsApp).
   // Kalau kosong, katalog membaca file data/kambing.json & data/testimoni.json.
   // Catatan: anon key memang boleh ada di website (aksesnya dibatasi RLS, hanya baca).
-  supabaseUrl: "",
-  supabaseAnonKey: "",
+  supabaseUrl: "https://jjkrkdyqkdhwmoathwbz.supabase.co",
+  supabaseAnonKey: "sb_publishable_M-c-ba8AfKp06mNyDStOag_wUqRu1MJ",
 
   // Muat ulang stok otomatis tiap N detik (0 = mati)
   refreshDetik: 60,

@@ -43,40 +43,80 @@
   const msgAntre = (k) => `Halo ${C.namaToko}, kalau *${k.kode}* (${nama(k)}) tersedia lagi, tolong kabari saya ya.`;
 
   /* ---------- ilustrasi pengganti foto ---------- */
-  const PAL = [
-    { bg: "#E3ECD9", body: "#FFFFFF", dark: "#3A3A34" },
-    { bg: "#F1E7D2", body: "#B07A4A", dark: "#3B2A1C" },
-    { bg: "#E2E9E6", body: "#2F2E2B", dark: "#1A1917" },
-    { bg: "#EFE9DD", body: "#E8DCC4", dark: "#6B5536" },
+  // Ilustrasi kambing/domba berdiri menghadap kanan, dipakai selama foto asli belum ada.
+  const SCENE = [
+    { sky: "#EAF1E0", hill: "#D2E2C0", ground: "#BDD6A6" },
+    { sky: "#F6EEDA", hill: "#E6DDBA", ground: "#CFDAA2" },
+    { sky: "#E4EEE9", hill: "#CCDFCF", ground: "#B5D1AD" },
+  ];
+  const GOAT = [
+    { coat: "#FBFAF5", shade: "#DCD8CC", patch: "#9A6136", horn: "#A89878", hoof: "#3A3530", eye: "#2A2622" },
+    { coat: "#A9693A", shade: "#7F4B26", patch: null, horn: "#5E4A36", hoof: "#2B2018", eye: "#1C1410" },
+    { coat: "#33302D", shade: "#1F1D1B", patch: "#F3EEE2", horn: "#7A7064", hoof: "#121110", eye: "#F0C24B" },
+    { coat: "#EADFC6", shade: "#CBBB97", patch: "#3A3531", horn: "#9C8B70", hoof: "#3A3530", eye: "#2A2622" },
+  ];
+  const SHEEP = [
+    { wool: "#F6F1E4", woolShade: "#DDD3BD", face: "#3B312B", horn: "#B9A27C" },
+    { wool: "#EADCBF", woolShade: "#CDBB98", face: "#EFE3CF", horn: "#9C8B70" },
+    { wool: "#DCD3C2", woolShade: "#BDB09A", face: "#2F2925", horn: "#A89878" },
   ];
   const hash = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
   function goatSVG(k) {
-    const p = PAL[hash(k.kode) % PAL.length];
+    const h = hash(k.kode);
+    const s = SCENE[h % SCENE.length];
+    const id = "c" + h.toString(36) + Math.random().toString(36).slice(2, 6);
+    const jantan = String(k.kelamin).toLowerCase() === "jantan";
     const domba = String(k.jenis).toLowerCase() === "domba";
-    const wool = domba
-      ? [[130, 150], [165, 128], [205, 124], [245, 132], [270, 160], [250, 192], [205, 200], [160, 198], [128, 180]]
-          .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="30" fill="${p.body}" stroke="${p.dark}" stroke-opacity=".18" stroke-width="3"/>`).join("")
-      : `<ellipse cx="200" cy="163" rx="96" ry="50" fill="${p.body}" stroke="${p.dark}" stroke-opacity=".2" stroke-width="3"/>`;
-    const horn = domba
-      ? `<path d="M286 92c-14-12-30-4-28 10 2 10 14 12 18 4" fill="none" stroke="${p.dark}" stroke-width="9" stroke-linecap="round" opacity=".75"/>`
-      : `<path d="M292 86c-6-22-24-34-40-30" fill="none" stroke="${p.dark}" stroke-width="8" stroke-linecap="round" opacity=".75"/>`;
-    const beard = domba || String(k.kelamin).toLowerCase() !== "jantan" ? "" : `<path d="M318 132l-6 26-10-22z" fill="${p.dark}" opacity=".7"/>`;
+    const bg = `<rect width="400" height="300" fill="${s.sky}"/>
+      <path d="M0 178C70 150 150 146 220 164S350 150 400 140V300H0Z" fill="${s.hill}"/>
+      <path d="M0 246C90 232 210 232 300 240S380 246 400 244V300H0Z" fill="${s.ground}"/>
+      <ellipse cx="214" cy="257" rx="112" ry="9" fill="#000" opacity=".09"/>`;
+    let animal;
+    if (domba) {
+      const p = SHEEP[(h >> 3) % SHEEP.length];
+      const puffs = [[150, 168, 30], [178, 146, 30], [214, 140, 31], [250, 146, 30], [276, 166, 28], [270, 194, 27], [238, 206, 28], [200, 208, 29], [164, 200, 28], [144, 186, 24]];
+      const horn = jantan ? `<path d="M304 112C288 96 266 106 268 126C270 144 292 148 298 134C302 124 292 118 284 124" fill="none" stroke="${p.horn}" stroke-width="10" stroke-linecap="round"/>` : "";
+      animal = `
+        <g fill="${p.face}"><rect x="160" y="196" width="12" height="58" rx="6"/><rect x="182" y="200" width="12" height="54" rx="6"/><rect x="242" y="200" width="12" height="54" rx="6"/><rect x="262" y="196" width="12" height="58" rx="6"/></g>
+        <ellipse cx="212" cy="178" rx="78" ry="38" fill="${p.wool}"/>
+        ${puffs.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${p.wool}" stroke="${p.woolShade}" stroke-width="3"/>`).join("")}
+        <ellipse cx="212" cy="178" rx="64" ry="26" fill="${p.wool}"/>
+        <path d="M282 152C288 132 300 116 312 112L330 136C322 150 310 162 296 172Z" fill="${p.wool}"/>
+        <path d="M300 122C306 106 330 102 342 116C352 128 352 150 340 160C328 168 310 162 304 150C300 142 298 132 300 122Z" fill="${p.face}"/>
+        <ellipse cx="298" cy="134" rx="16" ry="6.5" transform="rotate(-18 298 134)" fill="${p.face}"/>
+        <circle cx="306" cy="110" r="11" fill="${p.wool}"/><circle cx="320" cy="104" r="11" fill="${p.wool}"/><circle cx="333" cy="110" r="9" fill="${p.wool}"/>
+        ${horn}
+        <circle cx="330" cy="128" r="3.6" fill="${p.face === "#EFE3CF" ? "#2A2622" : "#F6F1E4"}"/>`;
+    } else {
+      const p = GOAT[(h >> 3) % GOAT.length];
+      const body = "M132 170C130 146 156 136 196 136C236 136 262 134 280 146C296 157 298 192 286 206C266 224 176 226 146 212C134 205 132 188 132 170Z";
+      const patch = p.patch
+        ? `<g clip-path="url(#${id})"><ellipse cx="170" cy="160" rx="34" ry="24" fill="${p.patch}"/><ellipse cx="258" cy="190" rx="26" ry="20" fill="${p.patch}"/></g>`
+        : "";
+      const legs = [[148, 196], [170, 200], [250, 200], [270, 196]]
+        .map(([x, y]) => `<rect x="${x}" y="${y}" width="13" height="${254 - y}" rx="6" fill="${p.coat}" stroke="${p.shade}" stroke-width="2"/><rect x="${x}" y="248" width="13" height="8" rx="3" fill="${p.hoof}"/>`).join("");
+      const beard = jantan ? `<path d="M336 130C336 144 332 156 326 162C322 152 322 140 326 130Z" fill="${p.shade}"/>` : "";
+      const horns = jantan
+        ? `<path d="M310 82C306 58 290 46 270 50" fill="none" stroke="${p.horn}" stroke-width="9" stroke-linecap="round"/><path d="M318 80C318 60 306 48 290 46" fill="none" stroke="${p.horn}" stroke-width="7" stroke-linecap="round"/>`
+        : `<path d="M312 82C310 68 302 60 292 58" fill="none" stroke="${p.horn}" stroke-width="7" stroke-linecap="round"/>`;
+      animal = `
+        <defs><clipPath id="${id}"><path d="${body}"/></clipPath></defs>
+        ${legs}
+        <path d="M136 164C124 156 120 144 124 132C132 138 138 148 140 158Z" fill="${p.coat}" stroke="${p.shade}" stroke-width="2"/>
+        <path d="M258 156C262 128 276 104 296 92L322 108C310 126 300 146 292 174Z" fill="${p.coat}" stroke="${p.shade}" stroke-width="3" stroke-linejoin="round"/>
+        <path d="${body}" fill="${p.coat}" stroke="${p.shade}" stroke-width="3"/>
+        ${patch}
+        <path d="M150 208C190 220 250 220 282 204" fill="none" stroke="${p.shade}" stroke-width="3" opacity=".6"/>
+        ${horns}
+        <path d="M292 92C298 76 318 70 332 78C344 85 352 104 354 118C356 128 348 134 340 132C332 130 326 122 320 116C310 108 298 104 292 92Z" fill="${p.coat}" stroke="${p.shade}" stroke-width="3" stroke-linejoin="round"/>
+        <ellipse cx="298" cy="104" rx="26" ry="8.5" transform="rotate(38 298 104)" fill="${p.coat}" stroke="${p.shade}" stroke-width="3"/>
+        ${beard}
+        <circle cx="328" cy="95" r="3.8" fill="${p.eye}"/>
+        <circle cx="349" cy="121" r="2.4" fill="${p.shade}"/>`;
+    }
     return `<svg class="goat" viewBox="0 0 400 300" role="img" aria-label="Ilustrasi ${esc(k.jenis)}, foto menyusul" preserveAspectRatio="xMidYMid slice">
-      <rect width="400" height="300" fill="${p.bg}"/>
-      <ellipse cx="200" cy="272" rx="190" ry="40" fill="#000" opacity=".05"/>
-      <g fill="${p.dark}" opacity=".85">
-        <rect x="134" y="190" width="15" height="70" rx="7"/><rect x="162" y="194" width="15" height="66" rx="7"/>
-        <rect x="232" y="194" width="15" height="66" rx="7"/><rect x="258" y="190" width="15" height="70" rx="7"/>
-      </g>
-      <path d="M108 140l-16-22 26 8z" fill="${p.body}" stroke="${p.dark}" stroke-opacity=".2" stroke-width="3"/>
-      ${wool}
-      <path d="M262 150c4-34 14-52 30-58l20 34c-8 14-22 28-40 34z" fill="${p.body}" stroke="${p.dark}" stroke-opacity=".2" stroke-width="3"/>
-      ${horn}
-      <ellipse cx="308" cy="112" rx="30" ry="22" transform="rotate(28 308 112)" fill="${p.body}" stroke="${p.dark}" stroke-opacity=".2" stroke-width="3"/>
-      <ellipse cx="282" cy="108" rx="18" ry="8" transform="rotate(-30 282 108)" fill="${p.dark}" opacity=".55"/>
-      <circle cx="308" cy="104" r="4" fill="${p.dark}"/>
-      ${beard}
-      <text x="200" y="292" text-anchor="middle" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="600" fill="${p.dark}" opacity=".45">foto menyusul</text>
+      ${bg}${animal}
+      <text x="200" y="286" text-anchor="middle" font-family="Plus Jakarta Sans, sans-serif" font-size="12.5" font-weight="700" fill="#1E4A2C" opacity=".5">foto menyusul</text>
     </svg>`;
   }
   const media = (k, i = 0) =>
@@ -137,10 +177,16 @@
         ${n > 1 ? `<span class="count">${n} foto</span>` : ""}
       </button>
       <div class="c-body">
-        <h3 class="c-title">${esc(k.jenis)} ${esc(k.ras || "")}<small>${esc(k.kelamin || "")}</small></h3>
+        <div class="c-head">
+          <h3 class="c-title">${esc(k.jenis)} ${esc(k.ras || "")}</h3>
+          <span class="sex sex-${String(k.kelamin || "").toLowerCase()}">${esc(k.kelamin || "")}</span>
+        </div>
         ${C.iduladha && k.layak_kurban ? `<span class="kurban-lbl">Layak kurban</span>` : ""}
-        <dl class="stats"><div><dt>Berat</dt><dd>${berat(k.berat_kg)}</dd></div><div><dt>Umur</dt><dd>${umur(k.umur_bulan)}</dd></div></dl>
-        <p class="price">${rupiah(k.harga)}</p>
+        <dl class="stats">
+          <div><svg aria-hidden="true"><use href="#ic-scale"/></svg><dt>Berat</dt><dd>${berat(k.berat_kg)}</dd></div>
+          <div><svg aria-hidden="true"><use href="#ic-cal"/></svg><dt>Umur</dt><dd>${umur(k.umur_bulan)}</dd></div>
+        </dl>
+        <p class="price"><span class="price-lbl">Harga</span>${rupiah(k.harga)}</p>
         ${open
           ? `<a class="btn btn-wa btn-block" href="${wa(msgPesan(k))}" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#ic-wa"/></svg>Pesan lewat WhatsApp</a>`
           : `<a class="btn btn-ghost btn-block" href="${wa(msgAntre(k))}" target="_blank" rel="noopener">Kabari saya kalau batal</a>`}
@@ -265,8 +311,20 @@
 
   /* ---------- muat ---------- */
   $("#grid").innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+  async function cekModeKurban() {
+    if (!(C.supabaseUrl && C.supabaseAnonKey)) return;
+    try {
+      const r = await fetch(`${C.supabaseUrl}/rest/v1/pengaturan_publik?select=iduladha`, { headers: { apikey: C.supabaseAnonKey, Authorization: `Bearer ${C.supabaseAnonKey}` } });
+      if (!r.ok) return;
+      const [p] = await r.json();
+      C.iduladha = !!(p && p.iduladha);
+      $("#banner-kurban").hidden = !C.iduladha;
+      $("#chip-kurban").hidden = !C.iduladha;
+    } catch { /* tetap pakai config.js */ }
+  }
   async function refresh(first) {
     try {
+      if (first) await cekModeKurban();
       const d = await loadKambing();
       META = { contoh: !!d.contoh };
       ALL = (d.kambing || []).filter((k) => STATUS[k.status]);
