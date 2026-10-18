@@ -16,6 +16,18 @@ window.BF_CONFIG = {
   dpMinimal: 100000,
   batasPelunasanHari: 3,
 
+  // Lokasi: semua dalam satu tempat
+  lokasiIsi: ["Kantor", "Kandang", "Dapur pemotongan & olahan"],
+  // Peta kecil di bagian lokasi (Google Maps embed, tanpa API key)
+  mapsEmbed: "https://maps.google.com/maps?q=peternakan%20pak%20muri%2C%20Jl.%20Kp.%20Peusar%2C%20Binong%2C%20Curug%2C%20Tangerang&z=15&output=embed",
+
+  // Tim. Isi "foto" dengan nama file di folder img/ (mis. "img/tim-muri.jpg") kalau fotonya sudah ada.
+  tim: [
+    { nama: "Bpk. Muri", peran: "Owner", foto: "" },
+    { nama: "Bpk. Tamsil", peran: "Pengelola harian kandang", foto: "" },
+    { nama: "Bung Raja", peran: "Pengelola harian & admin", foto: "" },
+  ],
+
   // Mode Iduladha: true = tampilkan banner kurban & filter "Layak kurban".
   iduladha: false,
 

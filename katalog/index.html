@@ -227,6 +227,23 @@
     </div>
   </section>
 
+  <section id="galeri" class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Galeri kegiatan</h2>
+        <p class="muted">Dari kandang, dapur pemotongan, sampai pengiriman ke rumah pembeli.</p>
+      </div>
+      <div id="galeri-grid" class="gal"></div>
+      <ul id="galeri-empty" class="gal gal-empty" hidden>
+        <li><svg aria-hidden="true"><use href="#ic-camera"/></svg><span>Beternak</span></li>
+        <li><svg aria-hidden="true"><use href="#ic-camera"/></svg><span>Pemotongan</span></li>
+        <li><svg aria-hidden="true"><use href="#ic-camera"/></svg><span>Dapur olahan</span></li>
+        <li><svg aria-hidden="true"><use href="#ic-camera"/></svg><span>Pengiriman</span></li>
+      </ul>
+      <p id="galeri-note" class="muted gal-note" hidden>Foto kegiatan segera hadir.</p>
+    </div>
+  </section>
+
   <section id="tentang" class="sec about">
     <div class="wrap">
       <div class="about-top">
@@ -276,16 +293,32 @@
     </div>
   </section>
 
+  <section id="tim" class="sec sec-alt">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Orang-orang di kandang kami</h2>
+        <p class="muted">Yang merawat ternak dan membalas chat kamu setiap hari.</p>
+      </div>
+      <ul id="tim-grid" class="tim"></ul>
+    </div>
+  </section>
+
   <section id="lokasi" class="sec">
     <div class="wrap lokasi">
       <div>
-        <h2>Main ke kandang</h2>
+        <h2>Mau main ke kandang?</h2>
+        <p class="lok-isi-lbl">Semuanya di satu lokasi:</p>
+        <ul class="lok-isi" id="lok-isi"></ul>
         <p class="addr" id="alamat"></p>
         <p>Buka untuk kunjungan jam <b class="js-jam"></b>.</p>
         <div class="hero-cta">
           <a class="btn btn-main js-maps" href="#" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#ic-pin"/></svg>Petunjuk arah</a>
           <a class="btn btn-ghost js-wa" data-msg="kunjung" href="#" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#ic-wa"/></svg>Kabari mau datang</a>
         </div>
+        <a class="map-card js-maps" href="#" target="_blank" rel="noopener" aria-label="Buka lokasi Barokah Farm di Google Maps">
+          <span class="map-frame" id="map-frame"></span>
+          <span class="map-cta"><svg aria-hidden="true"><use href="#ic-pin"/></svg>Buka di Google Maps</span>
+        </a>
       </div>
       <div class="faq">
         <details>
@@ -337,6 +370,11 @@
   <img src="img/otomaya-mark.png" alt="" width="18" height="18"><span>dibuat oleh <b>otomaya</b></span>
 </a>
 
+<dialog id="lightbox" class="lightbox" aria-label="Foto kegiatan">
+  <button class="x" type="button" id="lb-close" aria-label="Tutup">×</button>
+  <figure><img id="lb-img" alt=""><figcaption id="lb-cap"></figcaption></figure>
+</dialog>
+
 <dialog id="detail" class="sheet" aria-labelledby="d-title">
   <div class="sheet-in">
     <button class="x" type="button" id="d-close" aria-label="Tutup">×</button>
@@ -386,6 +424,9 @@
   <symbol id="ic-scale" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 10a4 4 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m12 10 1.6-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   <symbol id="ic-bolt" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 2 4 13.5h6.2L9 22l10-12.5h-6.4L13.5 2Z"/></symbol>
   <symbol id="ic-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-7A2.5 2.5 0 0 0 4 5.5v9A2.5 2.5 0 0 0 6.5 17H8" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="ic-office" viewBox="0 0 24 24"><path d="M4 21V5l8-2v18M12 8h8v13M2 21h20M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-pen" viewBox="0 0 24 24"><path d="M3 20V10l9-6 9 6v10M3 20h18M8 20v-6h8v6M8 14l8 6M16 14l-8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-pot" viewBox="0 0 24 24"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-6ZM2 10h20M9 6c0-1 1-1.5 1-2.5M13 6c0-1 1-1.5 1-2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="ic-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
 </svg>
 

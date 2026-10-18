@@ -475,6 +475,52 @@
     new IntersectionObserver(([e]) => $("#oto-badge").classList.toggle("hide", e.isIntersecting), { threshold: 0.2 }).observe($("#credit"));
   }
 
+  /* ---------- tim, lokasi, galeri ---------- */
+  const inisial = (n) => String(n).replace(/^(bpk|bapak|bu|ibu|bung|mas|mbak|pak)\.?\s+/i, "").trim().charAt(0).toUpperCase();
+  $("#tim-grid").innerHTML = (C.tim || []).map((t) => `<li class="orang">
+      <div class="orang-foto">${t.foto ? `<img src="${esc(t.foto)}" alt="Foto ${esc(t.nama)}" loading="lazy">`
+        : `<span class="mono" aria-hidden="true">${esc(inisial(t.nama))}</span><span class="foto-nanti">foto menyusul</span>`}</div>
+      <p class="orang-nama">${esc(t.nama)}</p>
+      <p class="orang-peran">${esc(t.peran)}</p>
+    </li>`).join("");
+  $("#tim").hidden = !(C.tim || []).length;
+  const ICON_LOK = { kantor: "ic-office", kandang: "ic-pen", dapur: "ic-pot" };
+  $("#lok-isi").innerHTML = (C.lokasiIsi || []).map((x) => {
+    const k = Object.keys(ICON_LOK).find((y) => x.toLowerCase().includes(y)) || "kandang";
+    return `<li><svg aria-hidden="true"><use href="#${ICON_LOK[k]}"/></svg>${esc(x)}</li>`;
+  }).join("");
+  if (C.mapsEmbed) {
+    // peta dimuat saat bagian lokasi hampir terlihat, supaya halaman tetap ringan
+    const pasang = () => { if (!$("#map-frame iframe")) $("#map-frame").innerHTML = `<iframe src="${esc(C.mapsEmbed)}" title="Peta lokasi Barokah Farm" loading="lazy" tabindex="-1" aria-hidden="true" referrerpolicy="no-referrer-when-downgrade"></iframe>`; };
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { pasang(); io.disconnect(); } }, { rootMargin: "400px" });
+      io.observe($("#lokasi"));
+    } else pasang();
+  }
+  const lb = $("#lightbox");
+  $("#lb-close").addEventListener("click", () => lb.close());
+  lb.addEventListener("click", (e) => { if (e.target === lb) lb.close(); });
+  $("#galeri-grid").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-src]");
+    if (!b) return;
+    $("#lb-img").src = b.dataset.src; $("#lb-img").alt = b.dataset.cap || "Foto kegiatan Barokah Farm";
+    $("#lb-cap").textContent = b.dataset.cap || "";
+    lb.showModal();
+  });
+  async function loadGaleri() {
+    try {
+      if (!SB) return [];
+      const r = await fetch(`${C.supabaseUrl}/rest/v1/galeri_publik?select=*&order=created_at.desc&limit=24`, { headers: H() });
+      return r.ok ? r.json() : [];
+    } catch { return []; }
+  }
+  loadGaleri().then((g) => {
+    $("#galeri-grid").innerHTML = g.map((x) => `<button type="button" class="gal-item" data-src="${esc(x.foto_url)}" data-cap="${esc(x.caption || "")}">
+      <img src="${esc(x.foto_url)}" alt="${esc(x.caption || "Kegiatan Barokah Farm")}" loading="lazy">${x.caption ? `<span>${esc(x.caption)}</span>` : ""}</button>`).join("");
+    $("#galeri-empty").hidden = g.length > 0;
+    $("#galeri-note").hidden = g.length > 0;
+  });
+
   /* ---------- hitung mundur flash sale ---------- */
   setInterval(() => {
     let lewat = false;
