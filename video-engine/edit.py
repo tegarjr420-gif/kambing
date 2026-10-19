@@ -134,7 +134,7 @@ def ease_expr(keys, var='t'):
 # ---------------------------------------------------------------- timeline
 class TL:
     def __init__(s):
-        s.shots = []; s.voice = []; s.amb = []; s.words = []; s.texts = []; s.sfx = []; s.t = 0.0; s.bounds = []
+        s.shots = []; s.voice = []; s.amb = []; s.words = []; s.texts = []; s.sfx = []; s.t = 0.0; s.bounds = []; s.peringatan = []
 
 AKHIR_KALIMAT = re.compile(r'[.!?]["\')]*$')
 ABA_ = re.compile(r'^(\d+|satu|dua|tiga|empat|lima|oke|ok|action)[,.!]?$', re.I)
@@ -214,6 +214,15 @@ def build(spec):
                     if k[0] > p0: np2.append([p0, k[0]])
                     if k[1] < p1: np2.append([k[1], p1])
                 pieces = np2
+            for p0, p1 in pieces:  # pemeriksa: tidak ada kata yang terbelah di titik potong
+                for w in semua:
+                    if (w['t0'] < p1 - 0.04 < w['t1'] - 0.06) or (w['t0'] + 0.06 < p0 + 0.04 < w['t1']):
+                        tl.peringatan.append(f"kata '{w['w']}' terbelah di {src}@{p1 if w['t0'] < p1 - 0.04 < w['t1'] - 0.06 else p0:.2f}")
+            if pieces:
+                akhir = [w for w in semua if w['t0'] < pieces[-1][1] - 0.04]
+                lanjut = [w for w in semua if w['t0'] >= pieces[-1][1] - 0.04]
+                if akhir and lanjut and not AKHIR_KALIMAT.search(akhir[-1]['w'].strip()) and lanjut[0]['t0'] - akhir[-1]['t1'] < 1.0:
+                    tl.peringatan.append(f"kalimat belum selesai di {src}@{pieces[-1][1]:.2f} ('{akhir[-1]['w']}' → '{lanjut[0]['w']}')")
             seg_start = tl.t; dipakai = set()
             cx = b.get('cx') or face_cx(src, a0, a1) or 0.5
             for pi, (p0, p1) in enumerate(pieces):
@@ -502,6 +511,7 @@ def mix_audio(tl, G, spec, out):
     V = np.zeros((n, 2), np.float32); A = np.zeros((n, 2), np.float32); X = np.zeros((n, 2), np.float32)
     for v in tl.voice:
         y = wav_src(v['src'], 'voice'); place(V, y[int(v['a']*SR):int(v['b']*SR)], v['start'], 0.012)
+
     for a in tl.amb:
         y = wav_src(a['src'], 'amb'); lam = a.get('lambat', 1.0)
         seg = y[int(a['a']*SR):int((a['a'] + a['dur']/lam)*SR)]
@@ -797,6 +807,7 @@ def main():
     tl, G = build(spec)
     os.makedirs(OUT, exist_ok=True); wd = f"{CACHE}/{spec['id']}"; os.makedirs(wd, exist_ok=True)
     print(f"[{spec['id']}] gaya={spec['gaya']} durasi={tl.t:.1f}s shot={len(tl.shots)} kata={len(tl.words)}", flush=True)
+    if tl.peringatan: print('  peringatan: ' + '; '.join(tl.peringatan), flush=True)
     json.dump(dict(shots=tl.shots, voice=tl.voice, words=tl.words, texts=tl.texts, bounds=tl.bounds, dur=tl.t), open(f'{wd}/timeline.json', 'w'), indent=1)
     if '--timeline' in sys.argv: return
     cepat = '--ulang-teks' in sys.argv and os.path.exists(f'{wd}/video.mp4') and os.path.exists(f'{wd}/mix.wav')

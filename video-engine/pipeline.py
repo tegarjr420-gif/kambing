@@ -123,10 +123,12 @@ def t_render(T, specs):
             if pr.returncode != 0 or not os.path.exists(out):
                 T.log(f"  GAGAL render {sp['id']}: {keluaran[-400:]}"); continue
             teks = re.findall(r'^\s+teks (.*)$', keluaran, re.M)
+            sp['_peringatan'] = re.findall(r'^\s+peringatan: (.*)$', keluaran, re.M)
+            if sp['_peringatan']: T.log('  ' + '; '.join(sp['_peringatan']))
             T.log(f"  selesai {time.time() - t0:.0f} dtk; teks: {teks[0][:300] if teks else '-'}")
             shutil.rmtree(f"{T.dir}/cache/{sp['id']}", ignore_errors=True)
             for f in glob.glob(f'{T.dir}/cache/shot_*.mp4') + glob.glob(f'{T.dir}/cache/stab_*.trf'): os.remove(f)
-        hasil.append(dict(id=sp['id'], gaya=sp['gaya'], file=out))
+        hasil.append(dict(id=sp['id'], gaya=sp['gaya'], file=out, peringatan=sp.get('_peringatan', [])))
     return hasil
 
 def cek_video(T, v):
@@ -141,6 +143,7 @@ def cek_video(T, v):
     masalah = []
     if v['durasi'] < 10: masalah.append('terlalu pendek')
     if v['lufs'] is None or abs(v['lufs'] + 14) > 2: masalah.append(f"volume {v['lufs']}")
+    if v.get('peringatan'): masalah.append('cek bagian bicara (mungkin terpotong)')
     v['masalah'] = masalah
     return v
 
