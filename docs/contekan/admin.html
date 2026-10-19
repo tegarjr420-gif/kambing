@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Contekan Admin Barokah Farm</title><link rel="stylesheet" href="base.css"></head>
+<body><div class="page">
+<header>
+  <img src="logo-bf.png" alt="">
+  <div><h1>Contekan Admin</h1><p>Semua perintah diketik di WhatsApp ke nomor bot. Bahasa bebas, tidak harus persis.</p></div>
+  <div class="no">Nomor bot (CS)<b>0878-9014-0532</b>Katalog: barokahfarm.pages.dev</div>
+</header>
+
+<div class="box wide">
+  <h2><span class="n">1</span>Alur satu pesanan</h2>
+  <div class="flow">
+    <span>Pembeli pesan</span><i>→</i><span>Bot tahan 60 menit, kirim ringkasan <b>#12</b></span><i>→</i>
+    <span>Bukti DP diteruskan ke admin</span><i>→</i>
+    <span><code>OK 12</code> / <code>TOLAK 12</code></span><i>→</i><span>Lunas maks. 3×24 jam (diingatkan H-1)</span><i>→</i>
+    <span><code>lunas 12</code></span><i>→</i><span>Bot minta ulasan</span>
+  </div>
+</div>
+
+<div class="box strip"><b>Kode produk</b><span><code>K-01</code> kambing per kelas berat</span><span><code>D-01</code> domba per kelas berat</span><span><code>AQ-01</code> aqiqah + masak · <code>AQ-02</code> + potong</span><span><code>QP-01…05</code> qurban paket</span><span><code>QK-01…05</code> qurban kelas</span></div>
+
+<div class="grid">
+  <div class="box">
+    <h2><span class="n">2</span>Pesanan (pakai nomor pesanan)</h2>
+    <table>
+      <tr><td>DP sudah masuk</td><td><code>OK 12</code> · banyak: <code>OK 12, 13</code></td></tr>
+      <tr><td>Bukti tidak sah</td><td><code>TOLAK 12 dana belum masuk</code></td></tr>
+      <tr><td>Sudah lunas</td><td><code>lunas 12</code></td></tr>
+      <tr><td>Batalkan pesanan</td><td><code>batalkan pesanan 12</code></td></tr>
+      <tr><td>Lihat ringkasan</td><td><code>stok</code> atau <code>laporan</code></td></tr>
+    </table>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">3</span>Stok</h2>
+    <table>
+      <tr><td>Atur stok</td><td><code>stok K-01 24</code></td></tr>
+      <tr><td>Ternak baru</td><td><code>tambah stok K-01 5</code></td></tr>
+      <tr><td>Laku di kandang</td><td><code>laku K-01 2</code></td></tr>
+      <tr><td>Tampil / sembunyi</td><td><code>tampilkan D-01</code><br><code>sembunyikan D-01</code></td></tr>
+      <tr><td>Foto produk</td><td>kirim foto + <code>foto K-01</code></td></tr>
+    </table>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">4</span>Harga &amp; flash sale</h2>
+    <table>
+      <tr><td>Ubah harga</td><td><code>harga K-01 1,9jt</code></td></tr>
+      <tr><td>Aqiqah per ekor</td><td><code>harga AQ-01 3 ekor 7,5jt bobot 23-25kg</code></td></tr>
+      <tr><td>Qurban kelas</td><td><code>harga QK-01 2,5jt berat 23-25kg</code></td></tr>
+      <tr><td>Kelas baru</td><td><code>tambah kambing jawa 25-30kg 2,3jt stok 10</code></td></tr>
+      <tr><td>Flash sale</td><td><code>flash K-01 1,6jt sampai jam 20.00</code></td></tr>
+      <tr><td>Hentikan flash</td><td><code>flash off K-01</code></td></tr>
+      <tr><td>Harga massal</td><td><code>harga domba naik 100rb</code></td></tr>
+    </table>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">5</span>Chat, galeri, ulasan</h2>
+    <table>
+      <tr><td>Balas sendiri</td><td><code>ambil alih 0812xxxx</code></td></tr>
+      <tr><td>Kembali ke bot</td><td><code>bot 0812xxxx</code></td></tr>
+      <tr><td>Foto kegiatan</td><td>kirim foto + <code>galeri potong aqiqah</code></td></tr>
+      <tr><td>Hapus galeri</td><td><code>hapus galeri 3</code></td></tr>
+      <tr><td>Ulasan</td><td><code>ulasan</code> · <code>sembunyikan ulasan 3</code></td></tr>
+      <tr><td>Mode kurban</td><td><code>mode kurban on</code> / <code>off</code></td></tr>
+      <tr><td>Semua perintah</td><td><code>bantuan</code></td></tr>
+    </table>
+  </div>
+
+  <div class="box note">
+    <h2><span class="n">6</span>Wajib diingat</h2>
+    <ul>
+      <li>Bot selalu kirim ringkasan dulu: balas <code>YA</code> untuk simpan, <code>batal</code> bila salah.</li>
+      <li>Batal sebelum batas: DP kembali penuh. Lewat 3 hari: batal otomatis, DP untuk pakan &amp; perawatan 1 bulan.</li>
+      <li>Bukti belum dicek 1 jam: bot menenangkan pembeli.</li>
+      <li>Pembeli bisa ketik <code>cek pesanan</code> sendiri.</li>
+    </ul>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">7</span>Otomatis setiap hari</h2>
+    <ul>
+      <li><b>07.00</b> rekap pagi: bukti menunggu cek, jatuh tempo, stok menipis, pengunjung web.</li>
+      <li>Tiap 5 menit: lepas tahanan 60 menit, pengingat H-1, batal otomatis.</li>
+      <li>Tiap 15 menit: alarm HP (aplikasi <b>ntfy</b>) bila WA terputus / AI gangguan.</li>
+    </ul>
+  </div>
+
+  <div class="box warn">
+    <h2><span class="n">8</span>Kalau ada masalah</h2>
+    <ul>
+      <li>Alarm "WhatsApp terputus": tunggu 15 menit (dinyalakan ulang otomatis). Masih putus: hubungi Otomaya.</li>
+      <li>Alarm "AI gangguan": cek saldo Gemini, lalu <code>bot 0812xxxx</code>.</li>
+      <li>Staf baru: kirim <code>STAF ______</code> (PIN dari Otomaya).</li>
+    </ul>
+  </div>
+</div>
+<footer><span>Barokah Farm · sejak 2004</span><span>Contekan admin · versi Oktober 2026 · sistem oleh Otomaya</span></footer>
+</div></body></html>

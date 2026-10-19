@@ -48,6 +48,7 @@
     umum: `Halo ${C.namaToko}, saya mau tanya kambing/domba yang tersedia.`,
     stok: `Halo ${C.namaToko}, saya cari kambing/domba dengan kriteria: `,
     kunjung: `Halo ${C.namaToko}, saya mau datang ke kandang hari … sekitar jam …`,
+    cek: "cek pesanan",
   };
   const judul = (p) => [p.nama, beratTxt(p)].filter(Boolean).join(" ");
   function msgPesan(p) {
@@ -157,6 +158,25 @@
   const H = () => ({ apikey: C.supabaseAnonKey, Authorization: `Bearer ${C.supabaseAnonKey}` });
   const SB = !!(C.supabaseUrl && C.supabaseAnonKey);
   let ALL = [], ULASAN = [], META = { contoh: false };
+  /* penghitung pengunjung (tanpa data pribadi): lihat halaman, buka detail, klik WhatsApp */
+  function catat(jenis, kode = "") {
+    if (!SB) return;
+    try {
+      fetch(`${C.supabaseUrl}/rest/v1/rpc/catat_kunjungan`, {
+        method: "POST", keepalive: true,
+        headers: { ...H(), "Content-Type": "application/json" },
+        body: JSON.stringify({ p_jenis: jenis, p_kode: kode || "" }),
+      }).catch(() => {});
+    } catch (e) { /* abaikan */ }
+  }
+  try { if (!sessionStorage.getItem("bf_lihat")) { sessionStorage.setItem("bf_lihat", "1"); catat("lihat"); } } catch (e) { catat("lihat"); }
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest && e.target.closest('a[href*="wa.me"]');
+    if (!a) return;
+    const card = a.closest("[data-kode]");
+    const kode = card ? card.dataset.kode : (a.closest("#detail") ? CUR : "");
+    catat("wa", kode || a.dataset.msg || "");
+  }, true);
   async function loadProduk() {
     if (SB) {
       const r = await fetch(`${C.supabaseUrl}/rest/v1/katalog_produk?select=*&order=urutan.asc,kode.asc`, { headers: H() });
@@ -378,6 +398,7 @@
     const p = ALL.find((x) => String(x.kode).toLowerCase() === String(kode).toLowerCase());
     if (!p) return;
     CUR = p.kode;
+    catat("detail", p.kode);
     const n = Math.max(1, (p.foto || []).length);
     $("#d-media").innerHTML = Array.from({ length: n }, (_, i) => media(p, i)).join("");
     fillDetail(p);

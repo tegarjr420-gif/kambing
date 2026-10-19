@@ -587,3 +587,7 @@ img,svg{max-width:100%}
 .sosial a:hover{background:var(--jerami);color:var(--tinta);border-color:var(--jerami)}
 .sosial svg{width:18px;height:18px}
 .sosial-foot{margin-top:4px}
+/* cek pesanan */
+.cek-line{display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px 14px;border:1px dashed var(--garis);border-radius:var(--r-sm);color:var(--tinta);text-decoration:none;font-size:14px;line-height:1.45;background:var(--putih);transition:border-color .2s,background .2s}
+.cek-line svg{width:20px;height:20px;flex:none;fill:var(--wa);margin-top:1px}
+.cek-line:hover,.cek-line:focus-visible{border-color:var(--wa);background:#f3fbf5}

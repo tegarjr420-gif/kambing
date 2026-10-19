@@ -5,8 +5,9 @@ Sistem penjualan kambing Barokah Farm, dibuat oleh [Otomaya](https://otomaya.pag
 | Folder | Isi |
 |---|---|
 | `katalog/` | Website katalog statis (HTML/CSS/JS, tanpa build). Siap di-hosting di Cloudflare Pages. |
-| `supabase/schema.sql` | Skema database: kambing, pesanan/DP, riwayat harga, testimoni, status percakapan. |
-| `n8n/` | Kode workflow n8n (SDK): CS WhatsApp, Kirim Teks WA, Kirim Pesan Sistem, Jadwal DP. |
+| `supabase/skema-live-2026-10-19.sql` | Snapshot lengkap database live (tabel, view, semua fungsi). `schema.sql` + `patch-*.sql` = riwayat. |
+| `n8n/` | Kode workflow n8n (SDK): CS WhatsApp, Kirim Teks WA, Kirim Pesan Sistem, Jadwal DP, Rekap Pagi, Alarm. |
+| `docs/contekan/` | Contekan 1 halaman (PDF A4) untuk admin dan staf kandang, plus sumber HTML-nya. |
 | `railway/` | Railway Function untuk memasang webhook WAHA → n8n. |
 
 ## Alur sistem
@@ -18,7 +19,9 @@ Pembeli WA ──► WAHA (Railway) ──webhook──► n8n "Kambing — CS W
                                               │  ├─ Gambar → Gemini baca bukti → Storage → teruskan ke admin
                                               │  └─ Admin: perintah bebas → Gemini → konfirmasi YA → admin_aksi
 n8n "Kambing — Jadwal DP" (tiap 5 menit) ──► jadwal_cek: lepas tahan 60 mnt, pengingat H-1, DP hangus
-Katalog (Cloudflare Pages) ──► Supabase view `katalog` (hanya baca)
+n8n "Kambing — Rekap Pagi" (07.00 WIB) ──► rekap_pagi: rekap admin & rekap kandang ke WhatsApp
+n8n "Kambing — Alarm WhatsApp & AI" (tiap 15 mnt) ──► cek sesi WAHA + alarm_cek ──► notifikasi HP (ntfy) & WA admin
+Katalog (Cloudflare Pages) ──► Supabase view `katalog_produk` (hanya baca) + catat_kunjungan (penghitung pengunjung)
 ```
 
 ## Pasang katalog di Cloudflare Pages
@@ -51,3 +54,13 @@ batas pelunasan, mode Iduladha (`iduladha: true/false`), dan tautan Otomaya.
 Katalog dijual per kelas: `K-xx` kambing, `D-xx` domba, `AQ-xx` paket aqiqah (harga per pilihan 1–10 ekor),
 `QP-xx` qurban paket, `QK-xx` qurban kelas. Admin mengatur stok, harga, flash sale, dan ulasan lewat WhatsApp
 (ketik `bantuan` dari nomor admin). Pesanan pembeli memakai nomor pesanan (`OK 12`, `lunas 12`).
+
+### Peran di WhatsApp
+- **Admin**: semua perintah. Nomor admin terdaftar di pengaturan `admin_wa` / `admin_chat`.
+- **Staf kandang**: daftar dengan mengirim `STAF <PIN>` ke nomor bot. Hanya boleh `stok`, `laku`, `stok K-01 24`,
+  `tambah stok`, `foto`, `galeri`, `tampilkan/sembunyikan`. Perintah lain dibalas "khusus admin".
+- **Pembeli**: dilayani AI. Ketik `cek pesanan` untuk melihat status, batas waktu, dan sisa bayar (tanpa AI).
+
+### Alarm ke HP
+Pasang aplikasi **ntfy** (Android/iOS), *Subscribe to topic*, isi nama topik yang diberikan Otomaya.
+Alarm berbunyi bila sesi WhatsApp terputus (sistem juga mencoba menyalakan ulang) atau ≥3 chat dalam 1 jam gagal dijawab AI.
