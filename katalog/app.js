@@ -446,6 +446,11 @@
   $("#yr").textContent = new Date().getFullYear();
   $$(".js-maps").forEach((a) => (a.href = C.mapsUrl));
   $$(".js-wa").forEach((a) => (a.href = wa(MSG[a.dataset.msg] || MSG.umum)));
+  const SO = C.sosial || {};
+  $$(".js-sos-ig").forEach((a) => (a.href = SO.instagram));
+  $$(".js-sos-tt").forEach((a) => (a.href = SO.tiktok));
+  $$(".js-sos-fb").forEach((a) => (a.href = SO.facebook));
+  $$(".js-sos-handle").forEach((e) => (e.textContent = SO.handle || ""));
   const O = C.otomaya || {};
   $$(".js-oto-web").forEach((a) => (a.href = `${O.web}/?ref=barokahfarm`));
   $$(".js-oto-ig").forEach((a) => (a.href = O.instagram));

@@ -41,6 +41,14 @@ window.BF_CONFIG = {
   // Muat ulang stok otomatis tiap N detik (0 = mati)
   refreshDetik: 60,
 
+  // Media sosial Barokah Farm
+  sosial: {
+    instagram: "https://www.instagram.com/barokah27farm/",
+    tiktok: "https://www.tiktok.com/@barokah27farm",
+    facebook: "https://web.facebook.com/profile.php?id=61595570909122",
+    handle: "@barokah27farm"
+  },
+
   // Kredit pembuat
   otomaya: {
     web: "https://otomaya.pages.dev",
