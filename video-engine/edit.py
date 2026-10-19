@@ -136,6 +136,48 @@ class TL:
     def __init__(s):
         s.shots = []; s.voice = []; s.amb = []; s.words = []; s.texts = []; s.sfx = []; s.t = 0.0; s.bounds = []
 
+AKHIR_KALIMAT = re.compile(r'[.!?]["\')]*$')
+ABA_ = re.compile(r'^(\d+|satu|dua|tiga|empat|lima|oke|ok|action)[,.!]?$', re.I)
+
+def rapikan_batas(ws, a0, a1, dur):
+    """pastikan potongan bicara berupa kalimat utuh dan tidak memotong kata:
+    'out' di tengah kalimat -> diperpanjang ke akhir kalimat (maks +5 dtk); 'in' di tengah kalimat -> dimundurkan ke awal kalimat (maks 4 dtk);
+    batas tidak boleh jatuh di dalam kata."""
+    if not ws: return a0, a1
+    # akhir: kata terakhir yang mulai sebelum out
+    j = max([i for i, w in enumerate(ws) if w['t0'] < a1 - 0.05] or [-1])
+    if j >= 0 and not AKHIR_KALIMAT.search(ws[j]['w'].strip()):
+        k = next((i for i in range(j, len(ws)) if AKHIR_KALIMAT.search(ws[i]['w'].strip())), len(ws) - 1)
+        if ws[k]['t1'] - a1 <= 5.0: a1 = ws[k]['t1'] + 0.25
+    if j >= 0:
+        j2 = max([i for i, w in enumerate(ws) if w['t0'] < a1 - 0.05] or [j])
+        nxt = ws[j2 + 1]['t0'] if j2 + 1 < len(ws) else dur
+        a1 = min(max(a1, ws[j2]['t1'] + 0.2), nxt - 0.03, dur - 0.02)
+    # awal: kata pertama yang berakhir setelah in
+    i = next((i for i, w in enumerate(ws) if w['t1'] > a0 + 0.05), None)
+    if i is not None:
+        s = i
+        while s > 0 and not AKHIR_KALIMAT.search(ws[s - 1]['w'].strip()) and not ABA_.match(ws[s - 1]['w'].strip()) and ws[i]['t0'] - ws[s - 1]['t0'] <= 4.0:
+            s -= 1
+        if s > 0 and not AKHIR_KALIMAT.search(ws[s - 1]['w'].strip()) and not ABA_.match(ws[s - 1]['w'].strip()):
+            s = i  # awal kalimat terlalu jauh: biarkan, tapi jangan memotong kata
+        while s < len(ws) - 1 and ABA_.match(ws[s]['w'].strip()): s += 1  # lewati hitungan aba-aba "1, 2, 3"
+        prev = ws[s - 1]['t1'] if s > 0 else 0.0
+        a0 = max(min(a0, ws[s]['t0'] - 0.1), prev + 0.03, 0.0)
+        if s > 0 and ABA_.match(ws[s - 1]['w'].strip()): a0 = max(a0, (ws[s - 1]['t1'] + ws[s]['t0']) / 2)
+    return round(a0, 3), round(a1, 3)
+
+def jeda_terdekat(ws, t, arah):
+    """geser titik t keluar dari dalam kata: 'kiri' -> sebelum kata itu, 'kanan' -> sesudahnya"""
+    for i, w in enumerate(ws):
+        if w['t0'] - 0.02 < t < w['t1'] + 0.02:
+            if arah == 'kiri':
+                prev = ws[i - 1]['t1'] if i > 0 else 0.0
+                return max(w['t0'] - 0.04, prev + 0.02, prev)
+            nxt = ws[i + 1]['t0'] if i + 1 < len(ws) else w['t1'] + 1.0
+            return max(w['t1'], min(w['t1'] + 0.06, nxt - 0.02))
+    return t
+
 def build(spec):
     G = GAYA[spec['gaya']]; tl = TL(); R = random.Random(spec.get('seed', 1))
     za, zb = G['zoom_alt']; alt = 0
@@ -147,7 +189,10 @@ def build(spec):
             tl.bounds.append((tl.t, tr))
         if j == 'bicara':
             src = b['src']; a0, a1 = b['in'], b['out']
-            words = [w for w in kata_klip(src) if w['t0'] >= a0 - 0.05 and w['t1'] <= a1 + 0.3]
+            semua = kata_klip(src)
+            a0, a1 = rapikan_batas(semua, a0, a1, meta(src)['dur'])
+            b['in'], b['out'] = a0, a1
+            words = [w for w in semua if w['t0'] >= a0 - 0.05 and w['t1'] <= a1 + 0.3]
             # potong jeda: pecah jadi potongan bila jeda > rapat detik
             pieces = [[a0, a1]]
             gap = b.get('rapat', 0.45)
@@ -156,12 +201,13 @@ def build(spec):
                 for w1, w2 in zip(words, words[1:]):
                     g = w2['t0'] - w1['t1']
                     if g > gap:
-                        cur[1] = w1['t1'] + 0.12; pieces.append(cur); cur = [w2['t0'] - 0.12, None]
+                        cur[1] = min(w1['t1'] + 0.18, w2['t0'] - 0.03); pieces.append(cur); cur = [max(w2['t0'] - 0.12, cur[1]), None]
                     elif b.get('potong_kalimat', True) and re.search(r'[.,!?]$', w1['w']) and w2['t0'] - cur[0] > 2.4:
                         mid = (w1['t1'] + w2['t0']) / 2  # jump cut di akhir kalimat tanpa membuang suara
                         cur[1] = mid; pieces.append(cur); cur = [mid, None]
-                cur[1] = min(a1, words[-1]['t1'] + 0.18); pieces.append(cur)
-            for k in b.get('buang', []):  # rentang sumber yang dibuang [x,y]
+                cur[1] = min(a1, words[-1]['t1'] + 0.25); pieces.append(cur)
+            for k in b.get('buang', []):  # rentang sumber yang dibuang [x,y], tepinya digeser ke jeda antar-kata
+                k[0], k[1] = jeda_terdekat(semua, k[0], 'kiri'), jeda_terdekat(semua, k[1], 'kanan')
                 np2 = []
                 for p0, p1 in pieces:
                     if k[1] <= p0 or k[0] >= p1: np2.append([p0, p1]); continue
@@ -171,7 +217,7 @@ def build(spec):
             seg_start = tl.t; dipakai = set()
             cx = b.get('cx') or face_cx(src, a0, a1) or 0.5
             for pi, (p0, p1) in enumerate(pieces):
-                d = round((p1 - p0) * FPS) / FPS; p1 = p0 + d  # durasi pas kelipatan frame
+                d = math.ceil((p1 - p0) * FPS - 1e-6) / FPS; p1 = p0 + d  # durasi kelipatan frame (dibulatkan ke atas: ujung kata tidak terpotong)
                 if d < 0.15: continue
                 z = (za, zb)[alt % 2] if b.get('zoom', True) else za; alt += 1
                 if pi > 0: tl.bounds.append((tl.t, G['transisi']['bicara']))

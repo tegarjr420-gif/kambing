@@ -66,6 +66,7 @@ Musik (dibuat mesin, aman hak cipta): {', '.join(MUSIK)}. Transisi: {', '.join(T
 ## Aturan teknis naskah (WAJIB, mesin akan menolak yang salah)
 - Semua waktu dalam DETIK SUMBER klip ('in', 'out', 'in' klip B-roll). Jangan melebihi durasi klip.
 - Bagian "bicara": ambil rentang kalimat utuh dari daftar ucapan (in sedikit sebelum kata pertama, out sedikit setelah kata terakhir). Kalimat yang salah ucap/terpotong/menyebut fakta keliru dibuang dengan "buang": [[x,y]].
+- Bagian "bicara" WAJIB berisi kalimat UTUH: "in" tepat sebelum kata pertama sebuah kalimat, "out" setelah kata terakhir yang diakhiri tanda titik/tanya/seru. JANGAN berhenti di koma atau di tengah kalimat (orang terdengar terpotong). Mesin akan memperpanjang otomatis sampai akhir kalimat bila kamu salah.
 - Untuk "sisip", "kata", dan "teks" di bagian bicara, JANGAN hitung detik; pakai "pada": "<kata yang diucapkan>" (mesin mencari kata itu), boleh ditambah "geser" (detik).
 - Teks di bagian "broll" memakai "at" = detik dari awal bagian itu.
 - Jangan isi koordinat "y" kecuali perlu; mesin otomatis menaruh tulisan di area kosong yang tidak menutupi wajah.
