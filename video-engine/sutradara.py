@@ -150,7 +150,7 @@ def panggil_claude(teks, gambar, timeout=900):
         content.append({'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': _kecilkan(p)}})
     content.append({'type': 'text', 'text': teks + '\n\nKeluarkan HANYA objek JSON valid, tanpa teks lain, tanpa ```.'})
     body = {'model': os.environ.get('CLAUDE_MODEL', 'claude-sonnet-5-5'), 'max_tokens': int(os.environ.get('CLAUDE_MAX_TOKENS', '24000')),
-            'temperature': 0.6, 'messages': [{'role': 'user', 'content': content}]}
+            'messages': [{'role': 'user', 'content': content}]}
     r = requests.post('https://api.anthropic.com/v1/messages', json=body, timeout=timeout,
                       headers={'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'})
     j = r.json()
