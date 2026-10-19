@@ -172,13 +172,16 @@ def panggil_ai(teks, gambar, log=print):
         try:
             out, use = panggil_claude(teks, gambar); return out, use, 'claude'
         except BatasHarian as e:
-            log(f'  {e}; pakai Gemini'); galat.append(str(e))
+            log(f'  {e}'); galat.append(str(e))
         except Exception as e:
-            log(f'  Claude gagal: {str(e)[:300]}; coba Gemini'); galat.append('Claude: ' + str(e)[:200])
-    try:
-        out, use = panggil_gemini(teks, gambar); return out, use, 'gemini'
-    except Exception as e:
-        galat.append(str(e)[:300])
+            log(f'  Claude gagal: {str(e)[:300]}'); galat.append('Claude: ' + str(e)[:200])
+    else:
+        galat.append('ANTHROPIC_API_KEY belum diisi')
+    if os.environ.get('GEMINI_CADANGAN', '0') == '1':  # nonaktif: pemilik memutuskan tidak memakai Gemini
+        try:
+            out, use = panggil_gemini(teks, gambar); return out, use, 'gemini'
+        except Exception as e:
+            galat.append(str(e)[:300])
     raise RuntimeError(' | '.join(galat))
 
 def baca_json(s):
@@ -285,10 +288,10 @@ def tulis(K, info, log=print):
             log(f'sutradara AI gagal (percobaan {gagal_beruntun}): {str(e)[:300]}')
             if time.time() - t_mulai > tunggu_maks: break
             d = jeda[min(gagal_beruntun - 1, len(jeda) - 1)]
-            log(f'  coba lagi dalam {d // 60} menit (Gemini sibuk/gangguan biasanya sementara)')
+            log(f'  coba lagi dalam {d // 60} menit')
             time.sleep(d)
     if os.environ.get('ATURAN_CADANGAN', '0') != '1':
-        raise TundaAI('Gemini belum bisa dipakai, editing ditunda')
+        raise TundaAI('AI sutradara belum bisa dipakai, editing ditunda')
     import aturan
     hasil = []
     for sp in aturan.susun(K, info):

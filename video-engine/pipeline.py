@@ -201,9 +201,9 @@ def jalankan(files, jid=None, uji=False):
             T.st['tunda_ke'] = T.st.get('tunda_ke', 0) + 1
             T.st['tunda_sampai'] = (now() + datetime.timedelta(minutes=30)).isoformat()
             if T.st['tunda_ke'] == 1:
-                lapor_wa(awal + '⏳ AI pengedit (Gemini) sedang gangguan/sibuk. Mentahan aman tersimpan; editing ditunda dan mesin mencoba lagi otomatis tiap 30 menit.', T.log)
+                lapor_wa(awal + '⏳ AI sutradara (Claude) sedang gangguan atau batas biaya harian tercapai. Mentahan aman tersimpan; editing ditunda dan mesin mencoba lagi otomatis tiap 30 menit.', T.log)
             if T.st['tunda_ke'] >= 48:
-                lapor_wa(awal + '⚠️ Gemini gangguan lebih dari 24 jam, editing belum bisa dibuat. Cek saldo/billing Gemini di aistudio.google.com.', T.log)
+                lapor_wa(awal + '⚠️ AI sutradara (Claude) tidak bisa dipakai lebih dari 24 jam, editing belum bisa dibuat. Cek saldo & batas di platform.claude.com.', T.log)
                 T.tahap('gagal'); return T
             T.tahap('tunggu_ai'); T.log('ditunda: menunggu Gemini, dicoba lagi', T.st['tunda_sampai']); return T
         if not specs: T.tahap('gagal'); lapor_wa('⚠️ Mesin video tidak bisa menyusun video dari mentahan terakhir (bahan kurang/rusak). Mohon kirim mentahan lain.', T.log); return T
@@ -224,7 +224,7 @@ def jalankan(files, jid=None, uji=False):
                 (f"\n\n📁 Semua video: {fj['url']}" if fj else '') +
                 (f"\n\n🗑️ {dihapus} mentahan sudah dihapus dari Drive." if dihapus else '') +
                 "\n📥 Silakan kirim *mentahan baru* ke folder *1. Video Mentah* di Drive (rekam potrait, stabil, suara dekat).")
-        if sumber not in ('gemini', 'claude', 'manual'): teks += '\n\nℹ️ Video kali ini disusun TANPA AI (Gemini gangguan berjam-jam), jadi isinya belum disaring. Mohon tonton dulu sebelum diposting.'
+        if sumber not in ('gemini', 'claude', 'manual'): teks += '\n\nℹ️ Video kali ini disusun TANPA AI, jadi isinya belum disaring. Mohon tonton dulu sebelum diposting.'
         lapor_wa(teks, T.log)
         T.tahap('selesai'); T.st['selesai'] = now().isoformat(); T.simpan()
         shutil.rmtree(f'{T.dir}/cache', ignore_errors=True); shutil.rmtree(f'{T.dir}/ana/wav', ignore_errors=True)

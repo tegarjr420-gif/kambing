@@ -88,7 +88,7 @@ class H(BaseHTTPRequestHandler):
             import sutradara
             try:
                 tanya = 'Balas JSON {"ok": true, "model": "<nama modelmu>"}'
-                if q.get('penyedia', [''])[0] == 'claude': out, use = sutradara.panggil_claude(tanya, [], timeout=120)
+                if q.get('penyedia', ['claude'])[0] == 'claude': out, use = sutradara.panggil_claude(tanya, [], timeout=120)
                 else: out, use = sutradara.panggil_gemini(tanya, [], timeout=120)
                 return s.kirim(200, dict(ok=True, jawab=out[:300], token=use))
             except Exception as e:
