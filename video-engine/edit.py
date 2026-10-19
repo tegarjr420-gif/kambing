@@ -12,6 +12,9 @@ S = os.path.dirname(E)
 RAW = os.environ.get('RAW', f'{S}/raw')
 ANA = f'{S}/ana'
 W, H, FPS, SR = 1080, 1920, 30, 48000
+LAND = False  # True = keluaran landscape 1920x1080
+def Y(y): return int(y * H / 1920)               # posisi vertikal dirancang untuk 1920, diskalakan
+def FS(z): return int(z * (0.85 if LAND else 1))  # ukuran huruf
 CACHE = f'{E}/cache'; os.makedirs(CACHE, exist_ok=True)
 VF_VERSI = 3  # naikkan bila filter video berubah agar cache shot dibuat ulang
 FONTS = f'{E}/fonts'
@@ -247,9 +250,12 @@ def vf_shot(sh_, G, dur_out, m, trf=None):
     kz = sh_.get('kf') or [[0, z0], [D, z1]]
     zt = '(' + ease_expr([(float(t), float(z)) for t, z in kz]) + ')'
     static = all(abs(z - 1.0) < 1e-6 for _, z in kz)
-    if sh_.get('fit') == 'blur' and sw > sh2:
-        f.append('split=2[bg][fg];[bg]scale=-2:1920,crop=1080:1920,boxblur=30:3,eq=brightness=-0.08[bgb];'
-                 f"[fg]scale=1080:-2:eval=frame[fgs];[bgb][fgs]overlay=(W-w)/2:(H-h)/2-60")
+    if (sh_.get('fit') == 'blur' and sw > sh2 and H > W):
+        f.append(f'split=2[bg][fg];[bg]scale=-2:{H},crop={W}:{H},boxblur=30:3,eq=brightness=-0.08[bgb];'
+                 f"[fg]scale={W}:-2:eval=frame[fgs];[bgb][fgs]overlay=(W-w)/2:(H-h)/2-60")
+    elif W > H and sh2 > sw:  # sumber potrait di keluaran landscape: video utuh di tengah + latar blur
+        f.append(f'split=2[bg][fg];[bg]scale={W}:-2,crop={W}:{H},boxblur=40:3,eq=brightness=-0.1:saturation=0.9[bgb];'
+                 f"[fg]scale=-2:{H}[fgs];[bgb][fgs]overlay=(W-w)/2:0")
     else:
         if sw / sh2 > W / H:
             cw = sh2 * W / H; ch = sh2
@@ -304,7 +310,7 @@ def render_shot(i, s, G, handle, key):
     a = s['a']
     if a + need > m['dur'] - 0.05:  # mundurkan awal bila kurang
         a = max(0, m['dur'] - 0.05 - need)
-    h = hashlib.md5(json.dumps([s, handle, G['grade'], G.get('letterbox'), G.get('lut'), a, VF_VERSI] + ([2] if s.get('sorot') else []), sort_keys=True).encode()).hexdigest()[:12]
+    h = hashlib.md5(json.dumps([s, handle, G['grade'], G.get('letterbox'), G.get('lut'), a, VF_VERSI, W, H] + ([2] if s.get('sorot') else []), sort_keys=True).encode()).hexdigest()[:12]
     out = f'{CACHE}/shot_{h}.mp4'
     if not os.path.exists(out):
         trf = None
@@ -480,10 +486,10 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Sub,{G['font']},{sb['size']},{sb['warna']},&H000000FF,&H00101010,{'&H8C000000' if sb['box'] else '&H64000000'},{bold},0,0,0,100,100,0,0,{3 if sb['box'] else 1},{12 if sb['box'] else sb['outline']},{sb['shadow']},2,70,70,0,1
-Style: Kunci,{k['font']},{k['size']},{k['warna']},&H000000FF,&H00101010,&H64000000,-1,0,0,0,100,100,0,0,1,{k['outline']},{3 if k['outline']==0 else 0},5,60,60,0,1
-Style: Kartu,{k['font']},{int(k['size']*0.9)},&H00FFFFFF,&H000000FF,&H00256E2C,&H00256E2C,-1,0,0,0,100,100,0,0,3,30,0,5,60,60,0,1
-Style: Kecil,{G['font']},{G.get('kecil', 54)},&H00FFFFFF,&H000000FF,&H00101010,&H64000000,-1,0,0,0,100,100,0,0,1,{G.get('kecil_outline', 4)},0,5,60,60,0,1
+Style: Sub,{G['font']},{FS(sb['size'])},{sb['warna']},&H000000FF,&H00101010,{'&H8C000000' if sb['box'] else '&H64000000'},{bold},0,0,0,100,100,0,0,{3 if sb['box'] else 1},{12 if sb['box'] else sb['outline']},{sb['shadow']},2,70,70,0,1
+Style: Kunci,{k['font']},{FS(k['size'])},{k['warna']},&H000000FF,&H00101010,&H64000000,-1,0,0,0,100,100,0,0,1,{k['outline']},{3 if k['outline']==0 else 0},5,60,60,0,1
+Style: Kartu,{k['font']},{FS(int(k['size']*0.9))},&H00FFFFFF,&H000000FF,&H00256E2C,&H00256E2C,-1,0,0,0,100,100,0,0,3,30,0,5,60,60,0,1
+Style: Kecil,{G['font']},{FS(G.get('kecil', 54))},&H00FFFFFF,&H000000FF,&H00101010,&H64000000,-1,0,0,0,100,100,0,0,1,{G.get('kecil_outline', 4)},0,5,60,60,0,1
 Style: LT1,{G.get('font_judul', G['font'])},50,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
 Style: LT2,{G['font']},34,&H00E6F0EA,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
 Style: Kotak,{G['font']},20,&H002C6E25,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
@@ -509,7 +515,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             word = re.sub(r'[,.]$', '', word) if per <= 3 else word
             if sb['upper']: word = word.upper()
             txts.append((w['t0'], w['t1'], esc(word)))
-        y = sb['y']
+        y = int(H * 0.88) if LAND else sb['y']
         if sb['sorot'] != sb['warna']:
             # sorot kata yang sedang diucapkan: satu event per kata aktif
             for wi, (a, b, _) in enumerate(txts):
@@ -520,7 +526,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         else:
             ev.append(f"Dialogue: 2,{ass_time(t0)},{ass_time(t1)},Sub,,0,0,0,,{{\\an2\\pos({W//2},{y})\\fad(120,80)}}{' '.join(t for _, _, t in txts)}")
     for t in tl.texts:
-        a, b = t['t0'], t['t1']; tx = esc(t['teks']); y = t.get('y') or k['y']
+        a, b = t['t0'], t['t1']; tx = esc(t['teks']); y = Y(t.get('y') or k['y'])
         if t['kind'] == 'kunci':
             an = k['anim']
             if an == 'pop':
@@ -536,9 +542,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             st = 'Kartu' if an == 'kartu' else 'Kunci'
             ev.append(f"Dialogue: 5,{ass_time(a)},{ass_time(b)},{st},,0,0,0,,{fx}{tx}")
             if t.get('sub2'):
-                ev.append(f"Dialogue: 5,{ass_time(a+0.15)},{ass_time(b)},Kecil,,0,0,0,,{{\\an5\\pos({W//2},{y + int(k['size']*(1.15 if k['anim']=='kartu' else 0.8))})\\fad(200,150)}}{esc(t['sub2'])}")
+                ev.append(f"Dialogue: 5,{ass_time(a+0.15)},{ass_time(b)},Kecil,,0,0,0,,{{\\an5\\pos({W//2},{y + FS(int(k['size']*(1.15 if k['anim']=='kartu' else 0.8)))})\\fad(200,150)}}{esc(t['sub2'])}")
         elif t['kind'] == 'lower':  # lower third beranimasi (geser masuk dengan ease-out, aksen kuning)
-            x0, yb = 64, t.get('y') or 1190; wbar = t.get('w', 640)
+            x0, yb = (110 if LAND else 64), (int(H*0.63) if LAND else (t.get('y') or 1190)); wbar = t.get('w', 640)
             box = f"m 0 0 l {wbar} 0 {wbar} 118 0 118"
             acc = "m 0 0 l 10 0 10 118 0 118"
             ev.append(f"Dialogue: 7,{ass_time(a)},{ass_time(b)},Kotak,,0,0,0,,{{\\an7\\pos({x0},{yb})\\1c&H2C6E25&\\1a&H18&\\clip(0,0,{x0},{H})\\t(0,380,0.4,\\clip(0,0,{x0+wbar},{H}))\\fad(0,200)\\p1}}{box}")
@@ -549,31 +555,31 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         elif t['kind'] == 'judul':
             ev.append(f"Dialogue: 6,{ass_time(a)},{ass_time(b)},Kunci,,0,0,0,,{{\\an5\\pos({W//2},{y})\\fscx60\\fscy60\\t(0,200,\\fscx100\\fscy100)\\fad(0,200)}}{tx}")
             if t.get('sub2'):
-                ev.append(f"Dialogue: 6,{ass_time(a+0.2)},{ass_time(b)},Kecil,,0,0,0,,{{\\an5\\pos({W//2},{y + int(k['size']*0.85)})\\fad(200,200)}}{esc(t['sub2'])}")
+                ev.append(f"Dialogue: 6,{ass_time(a+0.2)},{ass_time(b)},Kecil,,0,0,0,,{{\\an5\\pos({W//2},{y + FS(int(k['size']*0.85))})\\fad(200,200)}}{esc(t['sub2'])}")
     open(out, 'w').write(head + '\n'.join(ev) + '\n')
 
 # ---------------------------------------------------------------- kartu penutup (HTML -> PNG)
 def penutup_png(G, spec, out):
     gaya = G['penutup']
     js = f'{E}/penutup.js'
-    sh(['node', js, out, gaya, json.dumps(spec.get('penutup', {}))])
+    sh(['node', js, out, gaya, json.dumps(dict(spec.get('penutup', {}), w=W, h=H))])
 
 def final(tl, G, spec, vid, aud, ass, out):
     logo = f'{E}/aset/logo.png'
     pen = [t for t in tl.texts if t['kind'] == 'penutup']
     args = ['ffmpeg', '-nostdin', '-y', '-loglevel', 'error', '-i', vid, '-i', aud, '-i', logo]
     fc = [f"[0:v]ass={ass}:fontsdir={FONTS}[v1]"]
-    pos = {'kanan_atas': f'W-w-44:96', 'kiri_atas': '44:96', 'tengah_bawah': '(W-w)/2:H-h-170'}[G['logo']]
+    pos = {'kanan_atas': f'W-w-44:{60 if LAND else 96}', 'kiri_atas': f'44:{60 if LAND else 96}', 'tengah_bawah': f'(W-w)/2:H-h-{60 if LAND else 170}'}[G['logo']]
     pt0 = pen[0]['t0'] if pen else tl.t
     il = spec.get('intro_logo'); t_in = float(il.get('dur', 1.6)) if il else 0.0
-    fc.append(f"[2:v]scale=150:-1,format=rgba,colorchannelmixer=aa=0.92[lg]")
+    fc.append(f"[2:v]scale={120 if LAND else 150}:-1,format=rgba,colorchannelmixer=aa=0.92[lg]")
     fc.append(f"[v1][lg]overlay={pos}:enable='between(t,{t_in:.2f},{pt0:.2f})'[v2]")
     cur = '[v2]'; nxt = 3
     if il:  # logo reveal: membesar halus (ease-out) + fade, lalu mengecil jadi logo pojok
         args += ['-loop', '1', '-t', f'{t_in:.2f}', '-i', logo]
-        fc.append(f"[{nxt}:v]format=rgba,scale=w='trunc(340*(0.8+0.2*(1-pow(1-min(t/0.6,1),3)))/2)*2':h=-2:eval=frame,"
+        fc.append(f"[{nxt}:v]format=rgba,scale=w='trunc({260 if LAND else 340}*(0.8+0.2*(1-pow(1-min(t/0.6,1),3)))/2)*2':h=-2:eval=frame,"
                   f"fade=t=in:st=0:d=0.35:alpha=1,fade=t=out:st={t_in-0.3:.2f}:d=0.3:alpha=1[li]")
-        fc.append(f"{cur}[li]overlay=(W-w)/2:(H-h)/2-{il.get('naik', 260)}:eval=frame:enable='lt(t,{t_in:.2f})'[v2b]"); cur = '[v2b]'; nxt += 1
+        fc.append(f"{cur}[li]overlay=(W-w)/2:(H-h)/2-{Y(il.get('naik', 260))}:eval=frame:enable='lt(t,{t_in:.2f})'[v2b]"); cur = '[v2b]'; nxt += 1
     if pen:
         png = f"{CACHE}/penutup_{spec['id']}.png"; penutup_png(G, spec, png)
         args += ['-loop', '1', '-t', f'{tl.t:.2f}', '-i', png]
@@ -587,6 +593,10 @@ def final(tl, G, spec, vid, aud, ass, out):
 
 def main():
     spec = json.load(open(sys.argv[1]))
+    global W, H, LAND
+    if '--landscape' in sys.argv or spec.get('format') == 'landscape':
+        W, H, LAND = 1920, 1080, True
+        spec['id'] = spec['id'] + 'L'; spec['file'] = spec.get('file', spec['id']) + '-Landscape'
     tl, G = build(spec)
     os.makedirs(f'{E}/out', exist_ok=True); wd = f"{CACHE}/{spec['id']}"; os.makedirs(wd, exist_ok=True)
     print(f"[{spec['id']}] gaya={spec['gaya']} durasi={tl.t:.1f}s shot={len(tl.shots)} kata={len(tl.words)}", flush=True)

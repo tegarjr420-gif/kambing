@@ -22,9 +22,9 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:'Anton';src:url(${F('Anton_400Regular.ttf')});font-weight:700}
 @font-face{font-family:'Montserrat';src:url(${F('Montserrat_800ExtraBold.ttf')});font-weight:800}
 @font-face{font-family:'Montserrat';src:url(${F('Montserrat_600SemiBold.ttf')});font-weight:600}
-html,body{margin:0;width:1080px;height:1920px;background:transparent}
+html,body{margin:0;width:${opt.w || 1080}px;height:${opt.h || 1920}px;background:transparent}
 .wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-.card{width:880px;padding:70px 64px 64px;border-radius:56px;background:${V.card};color:${V.ink};text-align:center;box-shadow:0 40px 90px rgba(0,0,0,.35);${V.line ? 'border:2px solid rgba(233,199,123,.55);backdrop-filter:blur(6px)' : ''}}
+.card{transform:scale(${(opt.w || 1080) > (opt.h || 1920) ? 0.86 : 1});width:880px;padding:70px 64px 64px;border-radius:56px;background:${V.card};color:${V.ink};text-align:center;box-shadow:0 40px 90px rgba(0,0,0,.35);${V.line ? 'border:2px solid rgba(233,199,123,.55);backdrop-filter:blur(6px)' : ''}}
 .logo{width:230px;height:230px;border-radius:50%;margin:0 auto 34px;display:block;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 h1{font:800 104px/1 '${V.head}',sans-serif;margin:0;letter-spacing:${V.head === 'Anton' ? '1px' : '-1px'};text-transform:${V.head === 'Anton' ? 'uppercase' : 'none'};color:${V.acc}}
 .sub{font:600 38px/1.3 '${V.body}',sans-serif;margin:22px 0 44px;opacity:.9}
@@ -43,7 +43,7 @@ h1{font:800 104px/1 '${V.head}',sans-serif;margin:0;letter-spacing:${V.head === 
 </div></div></body></html>`;
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell' });
-  const p = await b.newPage({ viewport: { width: 1080, height: 1920 } });
+  const p = await b.newPage({ viewport: { width: opt.w || 1080, height: opt.h || 1920 } });
   const fs = require('fs'); const tmp = `${E}/aset/_penutup_${process.pid}.html`; fs.writeFileSync(tmp, html);
   await p.goto('file://' + tmp, { waitUntil: 'load' }); fs.unlinkSync(tmp);
   await p.evaluate(() => document.fonts.ready);
