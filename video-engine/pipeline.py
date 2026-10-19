@@ -281,7 +281,10 @@ def ulang(jid, dari='sutradara'):
     if not os.path.isdir(f'{d}/raw') or not os.listdir(f'{d}/raw'): return 'mentahan tugas itu sudah tidak ada'
     if KUNCI.locked(): return 'sibuk'
     st = json.load(open(f'{d}/status.json'))
-    if dari in ('sutradara', 'render'):
+    if dari == 'analisa':  # transkrip & analisa diulang; naskah lama tetap dipakai (titik potong dirapikan ulang dari kata yang baru)
+        for f in glob.glob(f'{d}/ana/asr/*.json') + [f'{d}/ana/klip.json']:
+            if os.path.exists(f): os.remove(f)
+    if dari in ('analisa', 'sutradara', 'render'):
         if dari == 'sutradara' and os.path.exists(f'{d}/naskah.json'): os.rename(f'{d}/naskah.json', f'{d}/naskah_lama_{int(time.time())}.json')
         for f in glob.glob(f'{d}/out/*.mp4'): os.remove(f)
         st['video'] = []; st.pop('folder_jadi', None)

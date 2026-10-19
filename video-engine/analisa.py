@@ -68,6 +68,33 @@ def potong_segmen(y):
 
 def norm(w): return re.sub(r'[^0-9a-z]', '', w.lower())
 
+def tutup_celah(y, segs, dol):
+    """pengaman: ucapan pelan di ujung kalimat kadang tidak terdeteksi pemotong segmen (mis. "...harganya sangat terjangkau").
+    Dolphin dijalankan pada seluruh klip sebagai pendeteksi ucapan; token yang jatuh di luar segmen membuat segmen
+    terdekat diperpanjang, atau ditambah segmen baru."""
+    dur = len(y) / SR; ts = []
+    for a in np.arange(0, dur, 25.0):
+        b = min(dur, a + 25.0); d = dol.create_stream(); d.accept_waveform(SR, y[int(a * SR):int(b * SR)]); dol.decode_stream(d)
+        ts += [float(t) + a for tok, t in zip(d.result.tokens, d.result.timestamps) if norm(tok.replace('▁', ''))]
+    segs = [list(x) for x in segs]
+    luar = [t for t in ts if not any(a - 0.1 <= t <= b + 0.05 for a, b in segs)]
+    grup = []
+    for t in luar:
+        if grup and t - grup[-1][1] < 0.8: grup[-1][1] = t
+        else: grup.append([t, t])
+    for g0, g1 in grup:
+        if sum(1 for t in luar if g0 <= t <= g1) < 2: continue  # satu token lepas: anggap derau
+        dekat = [x for x in segs if x[1] >= g0 - 1.5 and x[1] <= g1 and (g1 + 0.5) - x[0] <= 28]
+        sebelum = [x for x in segs if x[0] <= g1 + 1.5 and x[0] >= g0 and x[1] - (g0 - 0.35) <= 28]
+        if dekat: dekat[-1][1] = min(dur, g1 + 0.5)
+        elif sebelum: sebelum[0][0] = max(0.0, g0 - 0.35)
+        else: segs.append([max(0.0, g0 - 0.35), min(dur, g1 + 0.5)])
+    segs.sort(); out = []
+    for a, b in segs:
+        if out and a < out[-1][1] and b - out[-1][0] <= 28: out[-1][1] = max(out[-1][1], b)
+        else: out.append([max(a, out[-1][1]) if out else a, b])
+    return [(round(a, 2), round(b, 2)) for a, b in out if b - a > 0.2]
+
 def transkrip(wav):
     import difflib
     wh, dol = asr_models()
@@ -75,7 +102,7 @@ def transkrip(wav):
     sr, y = wavfile.read(wav); y = y.astype(np.float32) / 32768
     pk = np.abs(y).max() + 1e-9; y = y * min(0.5 / pk, 30)
     segs = []
-    for t0, t1 in potong_segmen(y):
+    for t0, t1 in tutup_celah(y, potong_segmen(y), dol):
         seg = y[int(t0 * SR):int(t1 * SR)]
         d = dol.create_stream(); d.accept_waveform(SR, seg); dol.decode_stream(d)
         toks = [[t, round(float(ts) + t0, 2)] for t, ts in zip(d.result.tokens, d.result.timestamps)]

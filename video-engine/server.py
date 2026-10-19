@@ -3,7 +3,7 @@ import os, json, threading, time, glob, urllib.parse, traceback
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import pipeline
 
-VERSI = '2026-10-20.2'
+VERSI = '2026-10-20.3'
 KEY = os.environ.get('ENGINE_KEY', '')
 MENIT = float(os.environ.get('CEK_MENIT', '20'))
 TERAKHIR = {'cek': None, 'hasil': None}

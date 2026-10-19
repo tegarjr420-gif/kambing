@@ -136,10 +136,31 @@ class TL:
     def __init__(s):
         s.shots = []; s.voice = []; s.amb = []; s.words = []; s.texts = []; s.sfx = []; s.t = 0.0; s.bounds = []; s.peringatan = []
 
+SUNYI = set()  # titik potong yang dipilih dari analisa audio (kata menempel)
 AKHIR_KALIMAT = re.compile(r'[.!?]["\')]*$')
 ABA_ = re.compile(r'^(\d+|satu|dua|tiga|empat|lima|oke|ok|action)[,.!]?$', re.I)
 
-def rapikan_batas(ws, a0, a1, dur):
+def aba_semu(w):
+    """kata hitungan aba-aba ("1, 2, 3") yang waktunya dijepit penyelaras (< 0.2 dtk) atau direntang (> 0.9 dtk): waktunya tidak bisa dipercaya"""
+    return bool(ABA_.match(w['w'].strip())) and not (0.2 <= w['t1'] - w['t0'] <= 0.9)
+
+def titik_sunyi(src, lo, hi):
+    """detik paling sunyi (RMS 30 ms) di rentang [lo, hi] audio klip; dipakai bila dua kata hampir menempel"""
+    lo = max(0.0, lo)
+    if hi - lo < 0.04: return None
+    try:
+        raw = subprocess.run(['ffmpeg', '-v', 'error', '-ss', f'{lo:.3f}', '-t', f'{hi - lo:.3f}', '-i', f'{RAW}/{src}.mp4', '-vn', '-ac', '1', '-ar', '16000',
+                              '-f', 's16le', '-'], capture_output=True, timeout=60).stdout
+        a = np.frombuffer(raw, np.int16).astype(np.float32)
+        n = len(a) // 160
+        if n < 3: return None
+        e = np.sqrt((a[:n * 160].reshape(n, 160) ** 2).mean(1))
+        e = np.convolve(e, np.ones(3) / 3, 'same')
+        return round(lo + (int(np.argmin(e)) + 0.5) * 0.01, 3)
+    except Exception:
+        return None
+
+def rapikan_batas(ws, a0, a1, dur, src=None):
     """pastikan potongan bicara berupa kalimat utuh dan tidak memotong kata:
     'out' di tengah kalimat -> diperpanjang ke akhir kalimat (maks +5 dtk); 'in' di tengah kalimat -> dimundurkan ke awal kalimat (maks 4 dtk);
     batas tidak boleh jatuh di dalam kata."""
@@ -153,6 +174,10 @@ def rapikan_batas(ws, a0, a1, dur):
         j2 = max([i for i, w in enumerate(ws) if w['t0'] < a1 - 0.05] or [j])
         nxt = ws[j2 + 1]['t0'] if j2 + 1 < len(ws) else dur
         a1 = min(max(a1, ws[j2]['t1'] + 0.2), nxt - 0.03, dur - 0.02)
+        if src and j2 + 1 < len(ws) and nxt - ws[j2]['t1'] < 0.15:  # kata berikut menempel: potong di titik tersunyi di antaranya
+            n = ws[j2 + 1]
+            t = titik_sunyi(src, ws[j2]['t1'] - 0.03, min(n['t0'] + 0.4 * (n['t1'] - n['t0']), n['t0'] + 0.2))
+            if t: a1 = t; SUNYI.add((src, round(t, 2)))
     # awal: kata pertama yang berakhir setelah in
     i = next((i for i, w in enumerate(ws) if w['t1'] > a0 + 0.05), None)
     if i is not None:
@@ -163,8 +188,13 @@ def rapikan_batas(ws, a0, a1, dur):
             s = i  # awal kalimat terlalu jauh: biarkan, tapi jangan memotong kata
         while s < len(ws) - 1 and ABA_.match(ws[s]['w'].strip()): s += 1  # lewati hitungan aba-aba "1, 2, 3"
         prev = ws[s - 1]['t1'] if s > 0 else 0.0
+        if s > 0 and aba_semu(ws[s - 1]): prev = ws[s - 1]['t0']  # aba-aba dengan waktu ASR terjepit: waktunya tidak bisa dipercaya
         # mulai sedikit sebelum kata pertama; jangan masuk ke kata sebelumnya, tapi juga jangan sampai memotong awal kata pertama
         a0 = max(min(a0, ws[s]['t0'] - 0.1), min(prev + 0.03, ws[s]['t0'] - 0.08), 0.0)
+        if src and s > 0 and not aba_semu(ws[s - 1]) and ws[s]['t0'] - prev < 0.15:  # kata sebelumnya menempel (mis. aba-aba "3" lalu "Yuk"): cari titik tersunyi
+            p = ws[s - 1]
+            t = titik_sunyi(src, max(p['t0'] + 0.6 * (p['t1'] - p['t0']), ws[s]['t0'] - 0.35), ws[s]['t0'] + 0.02)
+            if t: a0 = t; SUNYI.add((src, round(t, 2)))
     return round(a0, 3), round(a1, 3)
 
 def jeda_terdekat(ws, t, arah):
@@ -190,14 +220,14 @@ def build(spec):
         if j == 'bicara':
             src = b['src']; a0, a1 = b['in'], b['out']
             semua = kata_klip(src)
-            a0, a1 = rapikan_batas(semua, a0, a1, meta(src)['dur'])
+            a0, a1 = rapikan_batas(semua, a0, a1, meta(src)['dur'], src)
             b['in'], b['out'] = a0, a1
             words = [w for w in semua if w['t0'] >= a0 - 0.05 and w['t1'] <= a1 + 0.3]
             # potong jeda: pecah jadi potongan bila jeda > rapat detik
             pieces = [[a0, a1]]
             gap = b.get('rapat', 0.45)
             if gap and words:
-                pieces = []; cur = [max(a0, words[0]['t0'] - 0.12), None]
+                pieces = []; cur = [a0 if (src, round(a0, 2)) in SUNYI else max(a0, words[0]['t0'] - 0.12), None]
                 for w1, w2 in zip(words, words[1:]):
                     g = w2['t0'] - w1['t1']
                     if g > gap:
@@ -205,7 +235,7 @@ def build(spec):
                     elif b.get('potong_kalimat', True) and re.search(r'[.,!?]$', w1['w']) and w2['t0'] - cur[0] > 2.4:
                         mid = (w1['t1'] + w2['t0']) / 2  # jump cut di akhir kalimat tanpa membuang suara
                         cur[1] = mid; pieces.append(cur); cur = [mid, None]
-                cur[1] = min(a1, words[-1]['t1'] + 0.25); pieces.append(cur)
+                cur[1] = a1 if (src, round(a1, 2)) in SUNYI else min(a1, words[-1]['t1'] + 0.25); pieces.append(cur)
             for k in b.get('buang', []):  # rentang sumber yang dibuang [x,y], tepinya digeser ke jeda antar-kata
                 k[0], k[1] = jeda_terdekat(semua, k[0], 'kiri'), jeda_terdekat(semua, k[1], 'kanan')
                 np2 = []
@@ -216,6 +246,9 @@ def build(spec):
                 pieces = np2
             for p0, p1 in pieces:  # pemeriksa: tidak ada kata yang terbelah di titik potong
                 for w in semua:
+                    if aba_semu(w) and abs(p0 - w['t1']) < 0.3: continue
+                    if (src, round(p0, 2)) in SUNYI and w['t0'] < p0 < w['t1']: continue  # dipotong di titik tersunyi (batas kata ASR menempel)
+                    if (src, round(p1, 2)) in SUNYI and w['t0'] < p1 < w['t1']: continue
                     if (w['t0'] < p1 - 0.04 < w['t1'] - 0.06) or (w['t0'] + 0.06 < p0 + 0.04 < w['t1']):
                         tl.peringatan.append(f"kata '{w['w']}' terbelah di {src}@{p1 if w['t0'] < p1 - 0.04 < w['t1'] - 0.06 else p0:.2f}")
             if pieces:
