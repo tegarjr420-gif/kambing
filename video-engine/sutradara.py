@@ -112,6 +112,75 @@ def panggil_gemini(teks, gambar, model=None, timeout=600):
         raise RuntimeError('Jawaban Gemini tidak terbaca: ' + json.dumps(j)[:400])
     return out, j.get('usageMetadata', {})
 
+# ------------------------------------------------------------------ Claude (sutradara utama bila ANTHROPIC_API_KEY ada)
+class BatasHarian(Exception): pass
+
+def _biaya_path(): return os.path.join(os.environ.get('DATA', '/tmp'), 'biaya_claude.json')
+
+def biaya_hari_ini():
+    import datetime
+    hari = (datetime.datetime.utcnow() + datetime.timedelta(hours=7)).strftime('%Y-%m-%d')
+    try: B = json.load(open(_biaya_path()))
+    except Exception: B = {}
+    return hari, B
+
+def catat_biaya(usd):
+    hari, B = biaya_hari_ini(); B[hari] = round(B.get(hari, 0) + usd, 4)
+    try: json.dump(B, open(_biaya_path(), 'w'))
+    except Exception: pass
+    return B[hari]
+
+def _kecilkan(p, maks=1568):
+    from PIL import Image
+    import io
+    im = Image.open(p).convert('RGB'); s = maks / max(im.size)
+    if s < 1: im = im.resize((int(im.width * s), int(im.height * s)))
+    b = io.BytesIO(); im.save(b, 'JPEG', quality=80); return base64.b64encode(b.getvalue()).decode()
+
+def panggil_claude(teks, gambar, timeout=900):
+    key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
+    if not key: raise RuntimeError('ANTHROPIC_API_KEY belum diisi')
+    batas = float(os.environ.get('CLAUDE_BATAS_HARIAN_USD', '1.0'))
+    hari, B = biaya_hari_ini()
+    if B.get(hari, 0) >= batas:
+        raise BatasHarian(f'batas harian Claude ${batas:.2f} sudah tercapai hari ini (${B.get(hari, 0):.2f})')
+    content = []
+    for nama, p in gambar:
+        content.append({'type': 'text', 'text': f'Contact sheet klip {nama}:'})
+        content.append({'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': _kecilkan(p)}})
+    content.append({'type': 'text', 'text': teks + '\n\nKeluarkan HANYA objek JSON valid, tanpa teks lain, tanpa ```.'})
+    body = {'model': os.environ.get('CLAUDE_MODEL', 'claude-sonnet-5-5'), 'max_tokens': int(os.environ.get('CLAUDE_MAX_TOKENS', '24000')),
+            'temperature': 0.6, 'messages': [{'role': 'user', 'content': content}]}
+    r = requests.post('https://api.anthropic.com/v1/messages', json=body, timeout=timeout,
+                      headers={'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'})
+    j = r.json()
+    if r.status_code != 200 or j.get('type') == 'error':
+        raise RuntimeError(f"Claude {r.status_code}: {json.dumps(j.get('error', j))[:400]}")
+    u = j.get('usage', {})
+    hin = float(os.environ.get('CLAUDE_HARGA_INPUT', '2.0')); hout = float(os.environ.get('CLAUDE_HARGA_OUTPUT', '10.0'))
+    usd = (u.get('input_tokens', 0) * hin + u.get('output_tokens', 0) * hout + u.get('cache_creation_input_tokens', 0) * hin * 1.25
+           + u.get('cache_read_input_tokens', 0) * hin * 0.1) / 1e6
+    total = catat_biaya(usd)
+    out = ''.join(c.get('text', '') for c in j.get('content', []) if c.get('type') == 'text')
+    if j.get('stop_reason') == 'max_tokens': raise RuntimeError('jawaban Claude terpotong (max_tokens)')
+    return out, dict(totalTokenCount=u.get('input_tokens', 0) + u.get('output_tokens', 0), biaya_usd=round(usd, 4), biaya_hari_ini=total)
+
+def panggil_ai(teks, gambar, log=print):
+    """urutan: Claude (bila ada kunci & belum lewat batas harian) -> Gemini"""
+    galat = []
+    if os.environ.get('ANTHROPIC_API_KEY'):
+        try:
+            out, use = panggil_claude(teks, gambar); return out, use, 'claude'
+        except BatasHarian as e:
+            log(f'  {e}; pakai Gemini'); galat.append(str(e))
+        except Exception as e:
+            log(f'  Claude gagal: {str(e)[:300]}; coba Gemini'); galat.append('Claude: ' + str(e)[:200])
+    try:
+        out, use = panggil_gemini(teks, gambar); return out, use, 'gemini'
+    except Exception as e:
+        galat.append(str(e)[:300])
+    raise RuntimeError(' | '.join(galat))
+
 def baca_json(s):
     s = s.strip(); s = re.sub(r'^```[a-z]*\s*', '', s); s = re.sub(r'```\s*$', '', s)
     try: return json.loads(s)
@@ -191,9 +260,10 @@ def tulis(K, info, log=print):
     while True:
         try:
             t0 = time.time()
-            out, use = panggil_gemini(teks + masalah_lalu, gambar)
+            out, use, penyedia = panggil_ai(teks + masalah_lalu, gambar, log)
             J = baca_json(out)
-            log(f"sutradara Gemini: {len(J.get('video', []))} naskah ({time.time() - t0:.0f} dtk, token {use.get('totalTokenCount', '?')})")
+            log(f"sutradara {penyedia}: {len(J.get('video', []))} naskah ({time.time() - t0:.0f} dtk, token {use.get('totalTokenCount', '?')}"
+                + (f", biaya ${use['biaya_usd']}, hari ini ${use['biaya_hari_ini']}" if 'biaya_usd' in use else '') + ')')
             hasil = []; masalah = []
             for i, sp in enumerate(J.get('video', [])[:6], 1):
                 sp2, mm = periksa(sp, K, len(hasil) + 1, info)
@@ -203,7 +273,7 @@ def tulis(K, info, log=print):
                     hasil.append(sp2)
                     if mm: log(f'  naskah {i} diperbaiki otomatis: ' + '; '.join(mm))
             if hasil and (not masalah or ditolak >= 1):
-                return hasil, J.get('catatan', ''), 'gemini'
+                return hasil, J.get('catatan', ''), penyedia
             ditolak += 1
             if ditolak > 2: raise RuntimeError('naskah Gemini terus ditolak mesin')
             masalah_lalu = ('\n\n## PERBAIKI: percobaan sebelumnya ditolak mesin karena:\n- ' + '\n- '.join(masalah) +
@@ -212,7 +282,7 @@ def tulis(K, info, log=print):
             continue
         except Exception as e:
             gagal_beruntun += 1
-            log(f'sutradara Gemini gagal (percobaan {gagal_beruntun}): {str(e)[:300]}')
+            log(f'sutradara AI gagal (percobaan {gagal_beruntun}): {str(e)[:300]}')
             if time.time() - t_mulai > tunggu_maks: break
             d = jeda[min(gagal_beruntun - 1, len(jeda) - 1)]
             log(f'  coba lagi dalam {d // 60} menit (Gemini sibuk/gangguan biasanya sementara)')

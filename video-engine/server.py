@@ -87,7 +87,9 @@ class H(BaseHTTPRequestHandler):
         if u.path == '/uji-ai':  # tes koneksi Gemini lewat n8n
             import sutradara
             try:
-                out, use = sutradara.panggil_gemini('Balas JSON {"ok": true, "model": "<nama modelmu>"}', [], timeout=120)
+                tanya = 'Balas JSON {"ok": true, "model": "<nama modelmu>"}'
+                if q.get('penyedia', [''])[0] == 'claude': out, use = sutradara.panggil_claude(tanya, [], timeout=120)
+                else: out, use = sutradara.panggil_gemini(tanya, [], timeout=120)
                 return s.kirim(200, dict(ok=True, jawab=out[:300], token=use))
             except Exception as e:
                 return s.kirim(200, dict(ok=False, galat=str(e)[:500]))

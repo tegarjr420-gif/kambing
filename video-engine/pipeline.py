@@ -224,7 +224,7 @@ def jalankan(files, jid=None, uji=False):
                 (f"\n\n📁 Semua video: {fj['url']}" if fj else '') +
                 (f"\n\n🗑️ {dihapus} mentahan sudah dihapus dari Drive." if dihapus else '') +
                 "\n📥 Silakan kirim *mentahan baru* ke folder *1. Video Mentah* di Drive (rekam potrait, stabil, suara dekat).")
-        if sumber != 'gemini': teks += '\n\nℹ️ Video kali ini disusun TANPA AI (Gemini gangguan berjam-jam), jadi isinya belum disaring. Mohon tonton dulu sebelum diposting.'
+        if sumber not in ('gemini', 'claude', 'manual'): teks += '\n\nℹ️ Video kali ini disusun TANPA AI (Gemini gangguan berjam-jam), jadi isinya belum disaring. Mohon tonton dulu sebelum diposting.'
         lapor_wa(teks, T.log)
         T.tahap('selesai'); T.st['selesai'] = now().isoformat(); T.simpan()
         shutil.rmtree(f'{T.dir}/cache', ignore_errors=True); shutil.rmtree(f'{T.dir}/ana/wav', ignore_errors=True)
