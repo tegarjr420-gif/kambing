@@ -11,10 +11,13 @@ MUSIK = ['akustik', 'lofi', 'sinematik', 'pop', 'inspirasi', 'tropis', 'folk', '
 TRANSISI = ['cut', 'fade', 'whip', 'zoomin', 'slideleft', 'slideup', 'wipeleft', 'smoothleft', 'hblur', 'fadewhite', 'dissolve']
 PENUTUP = {'edukasi': 'terang', 'sinematik': 'gelap', 'hook': 'kuning', 'vlog': 'terang', 'promo': 'hijau', 'komersial': 'hijau'}
 
+ABA = re.compile(r'^(\d+|satu|dua|tiga|empat|lima|oke|ok|action)[,.!]?$', re.I)
+
 def kalimat(nama):
-    """ucapan per kalimat dengan waktu sumber: [(t0, t1, teks)]"""
+    """ucapan per kalimat dengan waktu sumber: [(t0, t1, teks)]; hitungan aba-aba di awal klip dibuang"""
     try: ws = kata_klip(nama)
     except Exception: return []
+    while ws and ABA.match(ws[0]['w'].strip()): ws = ws[1:]
     out = []; cur = []
     for w in ws:
         cur.append(w)
@@ -69,6 +72,7 @@ Musik (dibuat mesin, aman hak cipta): {', '.join(MUSIK)}. Transisi: {', '.join(T
 - Durasi tiap video 20–50 detik. Tiap video diakhiri bagian "penutup" (1 klip B-roll tenang, dur 3–3.6).
 - Klip yang CATATAN-nya "sangat goyang", "gelap", atau "buram" hanya boleh dipakai sebentar (≤1.2 dtk) atau tidak dipakai.
 - Satu momen sumber (rentang waktu yang sama dari klip yang sama) hanya boleh muncul di satu video.
+- Abaikan hitungan aba-aba (\"1, 2, 3\", \"oke\", \"action\") dan bagian sebelum orang mulai bicara; 'in' dimulai tepat sebelum kata pertama kalimat.
 - Teks layar singkat (≤ 4 kata per baris), bahasa Indonesia santai, tidak alay, tanpa emoji.
 - "file": "BarokahFarm-{info['tanggal']}-<no>-<Judul-Singkat>" tanpa spasi. "id": "A1", "A2", dst.
 - Keluaran video POTRAIT 1080x1920 untuk TikTok, Instagram, dan Facebook.
