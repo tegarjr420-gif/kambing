@@ -47,9 +47,11 @@ class Song:
     def n(s, part, t, note, vel, dur):
         if t >= 0: s.ev.append((t, part, int(note), int(max(1, min(127, vel))), dur))
 
-def compose(style, dur, seed, drop):
+def compose(style, dur, seed, drop, bpm_paksa=0):
     st = STYLES[style]; R = random.Random(seed)
-    bpm = R.randint(*st['bpm']); beat = 60 / bpm; bar = 4 * beat; six = beat / 4
+    bpm = R.randint(*st['bpm'])
+    if bpm_paksa: bpm = bpm_paksa
+    beat = 60 / bpm; bar = 4 * beat; six = beat / 4
     key = R.choice([0, 2, 3, 5, 7, 8, 9, 10]) - (12 if R.random() < 0.3 else 0)
     scale = MAJ if st['mode'] == 'maj' else MIN
     prog = R.choice(PROG[st['mode']]); ext = st.get('ext', False)
@@ -224,10 +226,10 @@ def master(x, dur, fade=1.5):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('gaya'); ap.add_argument('durasi', type=float); ap.add_argument('out')
-    ap.add_argument('--seed', type=int, default=1); ap.add_argument('--drop', type=float, default=0)
+    ap.add_argument('--seed', type=int, default=1); ap.add_argument('--drop', type=float, default=0); ap.add_argument('--bpm', type=int, default=0)
     a = ap.parse_args()
     st = STYLES[a.gaya]
-    S, info = compose(a.gaya, a.durasi, a.seed, a.drop)
+    S, info = compose(a.gaya, a.durasi, a.seed, a.drop, a.bpm)
     x = master(render(S, st, a.durasi), a.durasi)
     from scipy.io import wavfile
     wavfile.write(a.out, SR, (x * 32767).astype(np.int16))

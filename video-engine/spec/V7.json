@@ -1,0 +1,205 @@
+{
+ "id": "V7",
+ "file": "BarokahFarm-07-Promo-Cinematic-Commercial",
+ "gaya": "komersial",
+ "seed": 71,
+ "musik": {
+  "gaya": "akustik",
+  "seed": 21,
+  "bpm": 104,
+  "drop": 11.0
+ },
+ "intro_logo": {
+  "dur": 1.7,
+  "naik": 300
+ },
+ "bagian": [
+  {
+   "jenis": "broll",
+   "klip": [
+    {
+     "src": "VID_20261019_153412",
+     "in": 2.2,
+     "dur": 2.9,
+     "ramp": {
+      "cepat": 2.0,
+      "lambat": 0.5,
+      "titik": 0.3
+     },
+     "z0": 1.12,
+     "z1": 1.0,
+     "bebas": true
+    }
+   ],
+   "suara": 0,
+   "teks": [
+    {
+     "kind": "judul",
+     "at": 1.0,
+     "dur": 1.9,
+     "teks": "Barokah Farm",
+     "sub2": "Kambing & domba · Curug, Tangerang",
+     "y": 1080
+    }
+   ]
+  },
+  {
+   "jenis": "bicara",
+   "src": "20261019_160657",
+   "in": 0.4,
+   "out": 8.45,
+   "rapat": 0.4,
+   "sisip": [
+    {
+     "at": 1.5,
+     "dur": 1.25,
+     "src": "VID_20261019_153822",
+     "in": 0.4
+    }
+   ],
+   "teks": [
+    {
+     "kind": "lower",
+     "at": 3.0,
+     "dur": 3.6,
+     "teks": "Barokah Farm | Peternakan kambing & domba sejak 2004"
+    }
+   ]
+  },
+  {
+   "jenis": "broll",
+   "suara": 0,
+   "klip": [
+    {
+     "src": "VID_20261019_153822",
+     "in": 10.2,
+     "dur": 1.15
+    },
+    {
+     "src": "VID_20261019_153343",
+     "in": 16.4,
+     "dur": 1.15,
+     "ramp": {
+      "cepat": 1.0,
+      "lambat": 0.5,
+      "titik": 0.01
+     }
+    },
+    {
+     "src": "VID_20261019_154039",
+     "in": 0.2,
+     "dur": 1.15,
+     "kf": [
+      [
+       0,
+       1.0
+      ],
+      [
+       0.6,
+       1.0
+      ],
+      [
+       1.15,
+       1.12
+      ]
+     ]
+    },
+    {
+     "src": "VID_20261019_153506",
+     "in": 0.1,
+     "dur": 1.15
+    }
+   ],
+   "transisi": [
+    "whip",
+    0.2
+   ]
+  },
+  {
+   "jenis": "bicara",
+   "src": "20261019_160933",
+   "in": 0.0,
+   "out": 11.25,
+   "rapat": 0.4,
+   "sisip": [
+    {
+     "at": 3.9,
+     "dur": 1.0,
+     "src": "VID_20261019_153633",
+     "in": 0.5
+    },
+    {
+     "at": 5.1,
+     "dur": 0.9,
+     "src": "VID_20261019_153943",
+     "in": 3.0
+    }
+   ]
+  },
+  {
+   "jenis": "broll",
+   "suara": 0,
+   "klip": [
+    {
+     "src": "VID_20261019_153438",
+     "in": 0.4,
+     "dur": 1.75
+    },
+    {
+     "src": "VID_20261019_153822",
+     "in": 21.0,
+     "dur": 1.75
+    },
+    {
+     "src": "VID_20261019_153343",
+     "in": 21.2,
+     "dur": 1.75
+    }
+   ],
+   "teks": [
+    {
+     "kind": "kunci",
+     "at": 0.15,
+     "dur": 1.55,
+     "teks": "Gratis ongkir",
+     "sub2": "se-Jabodetabek"
+    },
+    {
+     "kind": "kunci",
+     "at": 1.9,
+     "dur": 1.55,
+     "teks": "DP mulai Rp100rb",
+     "sub2": "per ekor"
+    },
+    {
+     "kind": "kunci",
+     "at": 3.65,
+     "dur": 1.6,
+     "teks": "Pilih di katalog",
+     "sub2": "barokahfarm.pages.dev"
+    }
+   ],
+   "transisi": [
+    "whip",
+    0.2
+   ]
+  },
+  {
+   "jenis": "bicara",
+   "src": "20261019_163312",
+   "in": 2.72,
+   "out": 11.2,
+   "rapat": 0.45
+  },
+  {
+   "jenis": "penutup",
+   "src": "VID_20261019_153412",
+   "in": 7.0,
+   "dur": 3.4
+  }
+ ],
+ "penutup": {
+  "judul": "Barokah Farm",
+  "sub": "Kambing · Domba · Aqiqah · Qurban"
+ }
+}

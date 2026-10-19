@@ -13,6 +13,7 @@ RAW = os.environ.get('RAW', f'{S}/raw')
 ANA = f'{S}/ana'
 W, H, FPS, SR = 1080, 1920, 30, 48000
 CACHE = f'{E}/cache'; os.makedirs(CACHE, exist_ok=True)
+VF_VERSI = 3  # naikkan bila filter video berubah agar cache shot dibuat ulang
 FONTS = f'{E}/fonts'
 
 def sh(cmd, quiet=True):
@@ -63,10 +64,54 @@ def cam_path(src, a, b, c_start, dz=0.05):
     if cs.max() - cs.min() < 0.03: return None
     return [[round(float(t - a), 2), round(float(x), 4)] for t, x in zip(ts, cs)]
 
+def face_y(src, a, b):
+    global _faces
+    face_track(src)
+    rows = [r for r in (_faces or {}).get(src, []) if a - 0.3 <= r[0] <= b + 0.3 and r[3] > 0.04]
+    return float(np.median([r[2] for r in rows])) if rows else 0.33
+
 def face_cx(src, a, b):
     tr = [x for t, x in face_track(src) if a - 0.3 <= t <= b + 0.3]
     if not tr: return None
     return float(np.median(tr))
+
+# ---------------------------------------------------------------- koreksi warna otomatis
+_cc = None
+def cc_shot(src, a, b):
+    """statistik warna 3 frame -> gain RGB (white balance) + gamma (exposure), disamakan antar-shot"""
+    global _cc
+    if _cc is None:
+        try: _cc = json.load(open(f'{CACHE}/cc.json'))
+        except Exception: _cc = {}
+    key = f'{src}|{a:.2f}|{b:.2f}'
+    if key not in _cc:
+        ms = []
+        for t in (a + 0.1, (a + b) / 2, max(a + 0.1, b - 0.15)):
+            raw = subprocess.run(['ffmpeg', '-loglevel', 'error', '-ss', f'{t:.2f}', '-i', meta(src)['path'], '-frames:v', '1',
+                                  '-vf', 'scale=160:-2', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], capture_output=True).stdout
+            if raw: ms.append(np.frombuffer(raw, np.uint8).reshape(-1, 3).astype(np.float32) / 255)
+        px = np.concatenate(ms) if ms else np.full((10, 3), 0.45, np.float32)
+        lum = px @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+        mid = px[(lum > 0.12) & (lum < 0.88)]  # abaikan langit putih & bayangan pekat
+        if len(mid) < 50: mid = px
+        mean = mid.mean(0); y = float(np.median(lum))
+        _cc[key] = [float(x) for x in mean] + [y]
+        json.dump(_cc, open(f'{CACHE}/cc.json', 'w'))
+    r, g, b_, y = _cc[key]
+    gray = (r + g + b_) / 3
+    gains = [min(1.08, max(0.93, (gray / max(c, 1e-3)) ** 0.5)) for c in (r, g, b_)]
+    target = 0.44
+    gamma = min(1.22, max(0.85, math.log(max(y, 0.05)) / math.log(target)))
+    return dict(rr=round(gains[0], 3), gg=round(gains[1], 3), bb=round(gains[2], 3), gamma=round(gamma, 3))
+
+def ease_expr(keys, var='t'):
+    """keyframe [(t, v), ...] -> ekspresi ffmpeg dengan easing smoothstep"""
+    if len(keys) == 1: return f'{keys[0][1]}'
+    e = f'{keys[-1][1]}'
+    for (ta, va), (tb, vb) in reversed(list(zip(keys, keys[1:]))):
+        u = f'(({var}-{ta:.3f})/{max(tb - ta, 1e-3):.3f})'
+        e = f'if(lt({var},{tb:.3f}),{va}+({vb - va:.4f})*{u}*{u}*(3-2*{u}),{e})'
+    return f'if(lt({var},{keys[0][0]:.3f}),{keys[0][1]},{e})'
 
 # ---------------------------------------------------------------- timeline
 class TL:
@@ -114,7 +159,8 @@ def build(spec):
                 if pi > 0: tl.bounds.append((tl.t, G['transisi']['bicara']))
                 c0 = c1 = b.get('cx') or face_cx(src, p0, p1) or cx
                 path = None if b.get('cx') else cam_path(src, p0, p1, c0)
-                tl.shots.append(dict(kind='A', src=src, a=p0, dur=d, z0=z, z1=z + 0.02, cx=c0, cx1=c1, path=path, cy=b.get('cy', 0.42), start=tl.t, fit=b.get('fit', 'crop')))
+                tl.shots.append(dict(kind='A', src=src, a=p0, dur=d, z0=z, z1=z + 0.02, cx=c0, cx1=c1, path=path, cy=b.get('cy', 0.42), start=tl.t, fit=b.get('fit', 'crop'),
+                                     cc=cc_shot(src, p0, p1) if G.get('cc') else None, sorot=G.get('sorot', False), fy_wajah=face_y(src, p0, p1)))
                 tl.voice.append(dict(src=src, a=p0, b=p1, start=tl.t))
                 for wi_, w in enumerate(words):
                     if wi_ in dipakai: continue
@@ -123,58 +169,88 @@ def build(spec):
                         tl.words.append(dict(w=w['w'], t0=tl.t + w['t0'] - p0, t1=tl.t + min(w['t1'], p1) - p0))
                 tl.t += d
             seg_dur = tl.t - seg_start
+            jc = b.get('jcut', G.get('jcut', 0))
+            mains = [x for x in tl.shots if not x.get('overlay')]
+            firstA = next((x for x in mains if x['kind'] == 'A' and abs(x['start'] - seg_start) < 1e-6), None)
+            prev = [x for x in mains if x['start'] < seg_start - 1e-6]
+            if jc and firstA and prev and prev[-1]['kind'] == 'B' and firstA['dur'] > jc + 0.6:
+                # J-cut: suara mulai duluan, gambar B-roll sebelumnya masih tampil sebentar
+                prev[-1]['dur'] += jc; firstA['a'] += jc; firstA['dur'] -= jc; firstA['start'] += jc
+                if firstA.get('path'): firstA['path'] = [[round(t - jc, 2), x] for t, x in firstA['path'] if t - jc >= -0.25]
+                tl.bounds = [(t + jc if abs(t - seg_start) < 1e-6 else t, tr) for t, tr in tl.bounds]
             # sisipan B-roll di atas suara (cutaway). at: detik dari awal bagian ini (setelah dirapatkan)
             for c in b.get('sisip', []):
                 t0 = seg_start + c['at']; t1 = min(seg_start + seg_dur, t0 + c['dur'])
                 tl.shots.append(dict(kind='B', src=c['src'], a=c['in'], dur=t1 - t0, z0=1.0, z1=1.0 + G['gerak_broll'][1], cx=c.get('cx', 0.5), cy=0.5,
-                                     start=t0, overlay=True, lambat=c.get('lambat', 1.0), fit=c.get('fit', 'crop')))
+                                     start=t0, overlay=True, lambat=c.get('lambat', 1.0), fit=c.get('fit', 'crop'),
+                                     cc=cc_shot(c['src'], c['in'], c['in'] + c['dur']) if G.get('cc') else None,
+                                     stab=bool(G.get('stab') and c['src'].startswith('VID_') and c.get('stab', True))))
             for kk in b.get('kata', []):
                 tl.texts.append(dict(kind='kunci', t0=seg_start + kk['at'], t1=seg_start + kk['at'] + kk.get('dur', 1.6), teks=kk['teks'], y=kk.get('y')))
-                if G['sfx']['kunci']: tl.sfx.append((seg_start + kk['at'], G['sfx']['kunci']))
+                if G['sfx']['kunci']: tl.sfx.append((seg_start + kk['at'], G['sfx']['kunci'], G.get('sfx_db', {}).get('kunci', -8)))
             for tt in b.get('teks', []):
                 tl.texts.append(dict(kind=tt.get('kind', 'kunci'), t0=seg_start + tt['at'], t1=seg_start + tt['at'] + tt.get('dur', 2.0), teks=tt['teks'], y=tt.get('y'), sub2=tt.get('sub2')))
         elif j in ('broll', 'penutup'):
             items = b['klip'] if 'klip' in b else [b]
             lam = b.get('lambat', lambat_def)
             seg_start = tl.t
+            bpm = spec.get('musik', {}).get('bpm') if G.get('ketukan') else None
             for ci, c in enumerate(items):
                 d = round(c.get('dur', b.get('dur', 2.5)) * FPS) / FPS
+                if bpm and j == 'broll' and not c.get('bebas'):  # potongan jatuh tepat di ketukan musik (setengah ketukan)
+                    half = 30 / bpm
+                    end = max(tl.t + 0.5, round((tl.t + d) / half) * half)
+                    d = round((end - tl.t) * FPS) / FPS
                 if ci > 0: tl.bounds.append((tl.t, c.get('transisi') or G['transisi']['broll']))
                 mv = c.get('gerak', G['gerak_broll'][0])
                 zz = G['gerak_broll'][1]
                 z0, z1 = (1.0, 1.0 + zz) if R.random() < 0.6 else (1.0 + zz, 1.0)
                 if mv == 'punch': z0, z1 = 1.0 + zz, 1.0
+                lm = c.get('lambat', lam)
                 tl.shots.append(dict(kind='B', src=c['src'], a=c['in'], dur=d, z0=c.get('z0', z0), z1=c.get('z1', z1), cx=c.get('cx', 0.5), cy=c.get('cy', 0.5),
-                                     start=tl.t, lambat=c.get('lambat', lam), fit=c.get('fit', b.get('fit', 'crop')), gerak=mv, blur=(j == 'penutup')))
-                if c.get('suara', b.get('suara', 0)):
+                                     start=tl.t, lambat=lm, fit=c.get('fit', b.get('fit', 'crop')), gerak=mv, blur=(j == 'penutup'),
+                                     ramp=c.get('ramp'), kf=c.get('kf'),
+                                     cc=cc_shot(c['src'], c['in'], c['in'] + d / lm) if G.get('cc') else None,
+                                     stab=bool(G.get('stab') and c['src'].startswith('VID_') and c.get('stab', True) and j != 'penutup')))
+                if c.get('suara', b.get('suara')) is not None:
                     tl.amb.append(dict(src=c['src'], a=c['in'], dur=d, start=tl.t, gain=c.get('suara', b.get('suara')), lambat=c.get('lambat', lam)))
                 tl.t += d
             for tt in b.get('teks', []):
                 tl.texts.append(dict(kind=tt.get('kind', 'kunci'), t0=seg_start + tt.get('at', 0), t1=seg_start + tt.get('at', 0) + tt.get('dur', tl.t - seg_start - tt.get('at', 0)), teks=tt['teks'], y=tt.get('y'), sub2=tt.get('sub2')))
-                if G['sfx']['kunci'] and tt.get('kind', 'kunci') == 'kunci': tl.sfx.append((seg_start + tt.get('at', 0), G['sfx']['kunci']))
+                kd = tt.get('kind', 'kunci')
+                if kd in ('kunci', 'kartu') and G['sfx']['kunci']: tl.sfx.append((seg_start + tt.get('at', 0), G['sfx']['kunci'], G.get('sfx_db', {}).get('kunci', -8)))
+                if kd == 'judul' and G['sfx'].get('judul'): tl.sfx.append((seg_start + tt.get('at', 0), G['sfx']['judul'], G.get('sfx_db', {}).get('judul', -6)))
             if j == 'penutup':
                 tl.texts.append(dict(kind='penutup', t0=seg_start + 0.15, t1=tl.t, teks=b.get('cta', '')))
-    for t, tr in tl.bounds:
-        if tr != 'cut' and tr[0] and G['sfx']['transisi']: tl.sfx.append((t - 0.12, G['sfx']['transisi']))
+    for t, tr in tl.bounds:  # whoosh dimulai sedikit sebelum potongan agar terdengar alami
+        if tr != 'cut' and tr[0] and G['sfx']['transisi']: tl.sfx.append((t - 0.2, G['sfx']['transisi'], G.get('sfx_db', {}).get('transisi', -6)))
+    drop = spec.get('musik', {}).get('drop', 0)
+    if drop and G['sfx'].get('riser'): tl.sfx.append((max(0, drop - 1.35), G['sfx']['riser'], G.get('sfx_db', {}).get('riser', -10)))
     return tl, G
 
 # ---------------------------------------------------------------- video per shot
-def vf_shot(sh_, G, dur_out, m):
-    """filter: sumber -> 1080x1920, gerak zoom, grade"""
-    lam = sh_.get('lambat', 1.0)
+def vf_shot(sh_, G, dur_out, m, trf=None):
+    """filter: sumber -> stabilisasi -> speed/ramp -> 1080x1920 (crop/keyframe zoom) -> koreksi warna -> LUT -> grade"""
+    lam = sh_.get('lambat', 1.0); D = max(dur_out, 0.04)
     f = []
-    if lam != 1.0: f.append(f'setpts={lam}*PTS')
+    if trf: f.append(f"vidstabtransform=input={trf}:smoothing=14:zoom=4:optzoom=0:interpol=bicubic")
+    rp = sh_.get('ramp')
+    if rp:  # speed ramp: cepat (motion blur) lalu lambat (slow motion)
+        d1 = rp['titik'] * D; i1 = d1 * rp['cepat']
+        f.append(f"setpts='(if(lt(T-STARTT,{i1:.4f}),(T-STARTT)/{rp['cepat']},{d1:.4f}+(T-STARTT-{i1:.4f})/{rp['lambat']}))/TB'")
+        f.append(f"tmix=frames=4:enable='lt(t,{d1 - 0.02:.3f})'")
+    elif lam != 1.0:
+        f.append(f'setpts={lam}*PTS')
     f.append(f'fps={FPS}')
     sw, sh2 = m['w'], m['h']
     z0, z1 = sh_['z0'], sh_['z1']
-    D = max(dur_out, 0.04)
-    zt = f'({z0}+({z1}-{z0})*min(t/{D:.3f},1))'
+    kz = sh_.get('kf') or [[0, z0], [D, z1]]
+    zt = '(' + ease_expr([(float(t), float(z)) for t, z in kz]) + ')'
+    static = all(abs(z - 1.0) < 1e-6 for _, z in kz)
     if sh_.get('fit') == 'blur' and sw > sh2:
-        # video mendatar utuh di tengah + latar blur
         f.append('split=2[bg][fg];[bg]scale=-2:1920,crop=1080:1920,boxblur=30:3,eq=brightness=-0.08[bgb];'
                  f"[fg]scale=1080:-2:eval=frame[fgs];[bgb][fgs]overlay=(W-w)/2:(H-h)/2-60")
     else:
-        # crop 9:16 di sekitar cx, lalu zoom halus (scale per-frame + crop tengah)
         if sw / sh2 > W / H:
             cw = sh2 * W / H; ch = sh2
         else:
@@ -191,19 +267,29 @@ def vf_shot(sh_, G, dur_out, m):
             f.append(f"crop={int(cw)//2*2}:{int(ch)//2*2}:'max(0,min({sw - int(cw)//2*2},{e}))':{y0}")
         elif abs(x1 - x0) < 8:
             f.append(f'crop={int(cw)//2*2}:{int(ch)//2*2}:{x0}:{y0}')
-        else:  # geser halus mengikuti wajah (ease in-out)
+        else:
             f.append(f"crop={int(cw)//2*2}:{int(ch)//2*2}:'{x0}+({x1 - x0})*(0.5-0.5*cos(PI*min(t/{D:.3f},1)))':{y0}")
-        if z0 == z1 == 1.0:
+        if static:
             f.append(f'scale={W}:{H}:flags=lanczos')
         else:
-            mz = max(z0, z1)
             f.append(f"scale=w='trunc({W}*{zt}/2)*2':h='trunc({H}*{zt}/2)*2':eval=frame:flags=bicubic")
             ox = '(iw-ow)/2'; oy = f"(ih-oh)*{sh_.get('fy', 0.40)}"
             if sh_.get('gerak') == 'handheld':
                 ox = '(iw-ow)/2+6*sin(t*1.7)'; oy = '(ih-oh)/2+5*sin(t*1.3+1)'
             f.append(f"crop={W}:{H}:'{ox}':'{oy}'")
     if sh_.get('blur'): f.append('boxblur=14:2,eq=brightness=-0.12')
+    cc = sh_.get('cc')
+    if cc:  # koreksi warna: white balance + exposure, disamakan antar-shot
+        f.append(f"colorchannelmixer=rr={cc['rr']}:gg={cc['gg']}:bb={cc['bb']},eq=gamma={cc['gamma']}")
+    if G.get('lut'):
+        f.append(f"lut3d=file={E}/aset/lut/{G['lut']}.cube:interp=tetrahedral")
     f.append(G['grade'])
+    if sh_.get('sorot'):  # mask vignette lembut yang berpusat di subjek (ikut posisi wajah)
+        f.append(f"vignette=angle=PI/4:aspect=9/16:x0=w/2:y0=h*{min(0.5, sh_.get('fy_wajah', 0.33) + 0.1):.2f}")
+    if sh_.get('mb_awal'):
+        f.append(f"dblur=angle=0:radius=28:enable='lt(t,{sh_['mb_awal']:.3f})'")
+    if sh_.get('mb_akhir'):
+        f.append(f"dblur=angle=0:radius=28:enable='gte(t,{D - sh_['mb_akhir']:.3f})'")
     if G.get('letterbox') and sh_['kind'] == 'B':
         f.append('drawbox=0:0:1080:150:black:t=fill,drawbox=0:1770:1080:150:black:t=fill')
     f.append('format=yuv420p')
@@ -213,14 +299,20 @@ def render_shot(i, s, G, handle, key):
     m = meta(s['src'])
     dur = s['dur'] + handle
     lam = s.get('lambat', 1.0)
-    need = dur / lam
+    rp = s.get('ramp')
+    need = (rp['titik'] * dur * rp['cepat'] + (1 - rp['titik']) * dur * rp['lambat']) if rp else dur / lam
     a = s['a']
     if a + need > m['dur'] - 0.05:  # mundurkan awal bila kurang
         a = max(0, m['dur'] - 0.05 - need)
-    h = hashlib.md5(json.dumps([s, handle, G['grade'], G.get('letterbox'), a], sort_keys=True).encode()).hexdigest()[:12]
+    h = hashlib.md5(json.dumps([s, handle, G['grade'], G.get('letterbox'), G.get('lut'), a, VF_VERSI] + ([2] if s.get('sorot') else []), sort_keys=True).encode()).hexdigest()[:12]
     out = f'{CACHE}/shot_{h}.mp4'
     if not os.path.exists(out):
-        vf = vf_shot(s, G, dur, m)
+        trf = None
+        if s.get('stab'):  # stabilisasi 2 tahap (vid.stab): analisa guncangan lalu koreksi
+            trf = f'{CACHE}/stab_{h}.trf'
+            sh(['ffmpeg', '-nostdin', '-y', '-loglevel', 'error', '-ss', f'{a:.3f}', '-t', f'{need + 0.2:.3f}', '-i', m['path'], '-an',
+                '-vf', f'vidstabdetect=shakiness=6:accuracy=12:result={trf}', '-f', 'null', '-'])
+        vf = vf_shot(s, G, dur, m, trf)
         sh(['ffmpeg', '-nostdin', '-y', '-loglevel', 'error', '-ss', f'{a:.3f}', '-t', f'{need + 0.2:.3f}', '-i', m['path'], '-an',
             '-filter_complex', f'[0:v]{vf}[v]', '-map', '[v]', '-t', f'{dur:.3f}', '-r', str(FPS),
             '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '16', '-threads', '2', out + '.tmp.mp4'])
@@ -232,9 +324,15 @@ def assemble(tl, G, out):
     main = [s for s in tl.shots if not s.get('overlay')]
     trans = {round(t, 3): tr for t, tr in tl.bounds}
     files = []; Ts = []
+    trs = []
     for k, s in enumerate(main):
         nxt = main[k+1] if k+1 < len(main) else None
-        tr = trans.get(round(nxt['start'], 3), 'cut') if nxt else 'cut'
+        trs.append(trans.get(round(nxt['start'], 3), 'cut') if nxt else 'cut')
+    for k, s in enumerate(main):  # motion blur di sekitar transisi whip
+        if trs[k] != 'cut' and trs[k][0] == 'whip': s['mb_akhir'] = trs[k][1] + 0.06
+        if k > 0 and trs[k-1] != 'cut' and trs[k-1][0] == 'whip': s['mb_awal'] = trs[k-1][1] * 0.7
+    for k, s in enumerate(main):
+        tr = trs[k]
         T = 0 if tr == 'cut' else tr[1]
         files.append(render_shot(k, s, G, T if T else 2/FPS, 'm'))
         Ts.append((tr, T))
@@ -245,7 +343,7 @@ def assemble(tl, G, out):
     fc = []; cur = '[0:v]'; acc = main[0]['dur']
     for k in range(1, len(main)):
         tr, T = Ts[k-1]
-        name = 'fade' if tr == 'cut' else tr[0]
+        name = 'fade' if tr == 'cut' else {'whip': 'slideleft'}.get(tr[0], tr[0])
         dd = 1/FPS if tr == 'cut' else T
         o = f'[x{k}]'
         fc.append(f'{cur}[{k}:v]xfade=transition={name}:duration={dd:.4f}:offset={acc:.4f}{o}')
@@ -261,7 +359,8 @@ def assemble(tl, G, out):
     sh(args)
 
 # ---------------------------------------------------------------- audio
-VOICE_CHAIN = ('highpass=f=85,lowpass=f=13000,afftdn=nr=12:nf=-42:tn=1,'
+VOICE_CHAIN = ('highpass=f=80,bandreject=f=50:width_type=q:w=12,bandreject=f=100:width_type=q:w=12,adeclick,'
+               f'arnndn=m={E}/aset/suara.rnnn:mix=0.8,afftdn=nr=6:nf=-45:tn=1,lowpass=f=13000,deesser=i=0.35:m=0.5:f=0.5,'
                'equalizer=f=220:t=q:w=1.0:g=-2.5,equalizer=f=3200:t=q:w=1.3:g=3,equalizer=f=7500:t=q:w=1.5:g=1.5,'
                'acompressor=threshold=-22dB:ratio=3.5:attack=4:release=140:makeup=5,'
                'loudnorm=I=-16:TP=-1.5:LRA=6')
@@ -269,7 +368,7 @@ VOICE_CHAIN = ('highpass=f=85,lowpass=f=13000,afftdn=nr=12:nf=-42:tn=1,'
 def wav_src(src, kind):
     out = f'{CACHE}/aud_{src}_{kind}.wav'
     if not os.path.exists(out):
-        af = VOICE_CHAIN if kind == 'voice' else 'highpass=f=60,loudnorm=I=-24:TP=-3'
+        af = VOICE_CHAIN if kind == 'voice' else 'highpass=f=80,afftdn=nr=8:nf=-40,loudnorm=I=-22:TP=-3'
         sh(['ffmpeg', '-nostdin', '-y', '-loglevel', 'error', '-i', meta(src)['path'], '-vn', '-ac', '2', '-ar', str(SR), '-af', af, out])
     sr, y = wavfile.read(out); return y.astype(np.float32) / 32768
 
@@ -282,12 +381,18 @@ def place(buf, y, t, fade=0.01):
     buf[i:i+n] += y
 
 def sfx(kind):
-    n = int(0.6 * SR); t = np.arange(n) / SR; rng = np.random.default_rng(len(kind))
-    if kind == 'whoosh':
-        nz = rng.standard_normal(n); env = np.exp(-((t - 0.22) / 0.11) ** 2)
-        from scipy.signal import butter, sosfilt
-        lo = sosfilt(butter(2, [400, 5000], 'band', fs=SR, output='sos'), nz)
-        y = lo * env * 0.25
+    from scipy.signal import butter, sosfilt
+    n = int(1.4 * SR); t = np.arange(n) / SR; rng = np.random.default_rng(len(kind))
+    if kind == 'whoosh':  # udara lewat: noise disapu frekuensinya, puncak 0.22 dtk
+        nz = rng.standard_normal(n); env = np.exp(-((t - 0.22) / 0.09) ** 2)
+        lo = sosfilt(butter(2, [300, 2500], 'band', fs=SR, output='sos'), nz); hi = sosfilt(butter(2, [2500, 9000], 'band', fs=SR, output='sos'), nz)
+        y = (lo * np.clip(1.6 - t*4, 0.3, 1) + hi * np.clip(t*4 - 0.2, 0, 1)) * env * 0.22
+    elif kind == 'tick':  # klik lembut untuk teks/kartu
+        y = (np.sin(2*np.pi*2400*t) * 0.5 + rng.standard_normal(n) * 0.2) * np.exp(-t * 90) * 0.18
+    elif kind == 'riser':  # naik menjelang drop
+        y = sosfilt(butter(2, [800, 6000], 'band', fs=SR, output='sos'), rng.standard_normal(n)) * (t / 1.4) ** 2 * 0.12
+    elif kind == 'thump':  # pukulan bass halus untuk logo/judul
+        y = np.sin(2*np.pi*(70 - 25*t) * t) * np.exp(-t*6) * 0.5
     elif kind == 'pop':
         y = np.sin(2*np.pi*(900 - 500*t) * t) * np.exp(-t * 40) * 0.3
     elif kind == 'impact':
@@ -295,6 +400,9 @@ def sfx(kind):
     else:
         y = np.zeros(n)
     return np.stack([y, y], 1).astype(np.float32)
+
+def lufs_arr(x):
+    p = f'{CACHE}/_lv.wav'; wavfile.write(p, SR, np.clip(x, -1, 1)); return lufs(p)
 
 def lufs(path):
     o = subprocess.run(['ffmpeg', '-nostdin', '-hide_banner', '-i', path, '-af', 'ebur128', '-f', 'null', '-'], capture_output=True, text=True).stderr
@@ -312,15 +420,16 @@ def mix_audio(tl, G, spec, out):
         if lam != 1.0 and len(seg) > 10:  # perlambat dengan resample sederhana (nada turun, cocok untuk suasana)
             idx = np.linspace(0, len(seg)-1, int(len(seg)*lam)); seg = np.stack([np.interp(idx, np.arange(len(seg)), seg[:, k]) for k in range(2)], 1).astype(np.float32)
         place(A, seg * (10 ** (a['gain'] / 20)), a['start'], 0.15)
-    for t, k in tl.sfx:
-        if k: place(X, sfx(k) * 0.7, max(0, t), 0.002)
+    for it in tl.sfx:
+        t, k = it[0], it[1]; gdb = it[2] if len(it) > 2 else -6
+        if k: place(X, sfx(k) * 10 ** (gdb / 20), max(0, t), 0.002)
     # musik
     mz = spec.get('musik', {})
     gy = mz.get('gaya') or G['musik'][0]
     mfile = f"{CACHE}/musik_{spec['id']}_{gy}_{mz.get('seed', 1)}_{tl.t:.2f}.wav"
     drop = mz.get('drop', 0)
     if not os.path.exists(mfile):
-        sh([sys.executable, f'{E}/musik.py', gy, f'{tl.t + 0.3:.2f}', mfile, '--seed', str(mz.get('seed', 1)), '--drop', str(drop)])
+        sh([sys.executable, f'{E}/musik.py', gy, f'{tl.t + 0.3:.2f}', mfile, '--seed', str(mz.get('seed', 1)), '--drop', str(drop)] + (['--bpm', str(mz['bpm'])] if mz.get('bpm') else []))
     sr, m = wavfile.read(mfile); m = m.astype(np.float32) / 32768
     if sr != SR:
         idx = np.linspace(0, len(m)-1, int(len(m)*SR/sr)); m = np.stack([np.interp(idx, np.arange(len(m)), m[:, k]) for k in range(2)], 1).astype(np.float32)
@@ -338,12 +447,19 @@ def mix_audio(tl, G, spec, out):
     for i in range(0, len(g), 64):  # blok 64 sampel agar cepat
         tgt = g[i]; c = a_ if tgt < s0 else r_; s0 += (tgt - s0) * (1 - (1-c)**64); sm[i:i+64] = s0
     M *= sm[:, None]
-    mix = V + A + X * 0.8 + M
+    # pastikan musik selalu di bawah suara asli (suara orang & suara kandang)
+    asli = np.sqrt(np.convolve((V**2).mean(1), np.ones(int(0.4*SR))/int(0.4*SR), 'same'))  # patokan: suara orang
+    mus = np.sqrt(np.convolve((M**2).mean(1), np.ones(int(0.4*SR))/int(0.4*SR), 'same'))
+    over = np.where((asli > 10 ** (-40/20)) & (mus > asli * 10 ** (-9/20)), (asli * 10 ** (-9/20)) / np.maximum(mus, 1e-6), 1.0)
+    over = np.convolve(over, np.ones(int(0.2*SR))/int(0.2*SR), 'same').astype(np.float32)
+    M *= np.clip(over, 0.25, 1.0)[:, None]
+    mix = V + A + X + M
     tmp = out + '.pre.wav'; wavfile.write(tmp, SR, np.clip(mix, -1, 1))
     L = lufs(tmp); gain = -14.0 - L
+    info_lv = dict(lv_suara=round(lufs_arr(V), 1), lv_musik=round(lufs_arr(M), 1), lv_kandang=round(lufs_arr(A), 1))
     sh(['ffmpeg', '-nostdin', '-y', '-loglevel', 'error', '-i', tmp, '-af', f'volume={gain:.2f}dB,alimiter=limit=0.84:attack=3:release=60', '-ar', str(SR), out])
     os.remove(tmp)
-    return dict(lufs_awal=L, musik=gy)
+    return dict(lufs_awal=L, musik=gy, **info_lv)
 
 # ---------------------------------------------------------------- teks (ASS)
 def ass_time(t):
@@ -367,7 +483,10 @@ Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour,
 Style: Sub,{G['font']},{sb['size']},{sb['warna']},&H000000FF,&H00101010,{'&H8C000000' if sb['box'] else '&H64000000'},{bold},0,0,0,100,100,0,0,{3 if sb['box'] else 1},{12 if sb['box'] else sb['outline']},{sb['shadow']},2,70,70,0,1
 Style: Kunci,{k['font']},{k['size']},{k['warna']},&H000000FF,&H00101010,&H64000000,-1,0,0,0,100,100,0,0,1,{k['outline']},{3 if k['outline']==0 else 0},5,60,60,0,1
 Style: Kartu,{k['font']},{int(k['size']*0.9)},&H00FFFFFF,&H000000FF,&H00256E2C,&H00256E2C,-1,0,0,0,100,100,0,0,3,30,0,5,60,60,0,1
-Style: Kecil,{G['font']},54,&H00FFFFFF,&H000000FF,&H00101010,&H64000000,-1,0,0,0,100,100,0,0,1,4,0,5,60,60,0,1
+Style: Kecil,{G['font']},{G.get('kecil', 54)},&H00FFFFFF,&H000000FF,&H00101010,&H64000000,-1,0,0,0,100,100,0,0,1,{G.get('kecil_outline', 4)},0,5,60,60,0,1
+Style: LT1,{G.get('font_judul', G['font'])},50,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
+Style: LT2,{G['font']},34,&H00E6F0EA,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
+Style: Kotak,{G['font']},20,&H002C6E25,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -411,13 +530,22 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             elif an == 'tulis':
                 fx = f"{{\\an5\\pos({W//2},{y})\\frz-4\\fad(200,200)\\clip(0,0,0,{H})\\t(0,500,\\clip(0,0,{W},{H}))}}"
             elif an == 'kartu':
-                fx = f"{{\\an5\\move({W//2},{y+60},{W//2},{y},0,180)\\fad(150,150)}}"
+                fx = f"{{\\an5\\pos({W//2},{y})\\fscx70\\fscy70\\alpha&HFF&\\t(0,260,0.45,\\fscx100\\fscy100\\alpha&H00&)\\fad(0,180)}}"
             else:
                 fx = f"{{\\an5\\pos({W//2},{y})\\fad(400,400)}}"
             st = 'Kartu' if an == 'kartu' else 'Kunci'
             ev.append(f"Dialogue: 5,{ass_time(a)},{ass_time(b)},{st},,0,0,0,,{fx}{tx}")
             if t.get('sub2'):
                 ev.append(f"Dialogue: 5,{ass_time(a+0.15)},{ass_time(b)},Kecil,,0,0,0,,{{\\an5\\pos({W//2},{y + int(k['size']*(1.15 if k['anim']=='kartu' else 0.8))})\\fad(200,150)}}{esc(t['sub2'])}")
+        elif t['kind'] == 'lower':  # lower third beranimasi (geser masuk dengan ease-out, aksen kuning)
+            x0, yb = 64, t.get('y') or 1190; wbar = t.get('w', 640)
+            box = f"m 0 0 l {wbar} 0 {wbar} 118 0 118"
+            acc = "m 0 0 l 10 0 10 118 0 118"
+            ev.append(f"Dialogue: 7,{ass_time(a)},{ass_time(b)},Kotak,,0,0,0,,{{\\an7\\pos({x0},{yb})\\1c&H2C6E25&\\1a&H18&\\clip(0,0,{x0},{H})\\t(0,380,0.4,\\clip(0,0,{x0+wbar},{H}))\\fad(0,200)\\p1}}{box}")
+            ev.append(f"Dialogue: 8,{ass_time(a)},{ass_time(b)},Kotak,,0,0,0,,{{\\an7\\pos({x0},{yb})\\1c&H4EC1F2&\\fad(120,200)\\p1}}{acc}")
+            l1, _, l2 = t['teks'].partition('|')
+            ev.append(f"Dialogue: 9,{ass_time(a+0.18)},{ass_time(b)},LT1,,0,0,0,,{{\\an7\\move({x0+10},{yb+14},{x0+30},{yb+14},0,320)\\alpha&HFF&\\t(0,300,0.5,\\alpha&H00&)\\fad(0,200)}}{esc(l1.strip())}")
+            if l2: ev.append(f"Dialogue: 9,{ass_time(a+0.3)},{ass_time(b)},LT2,,0,0,0,,{{\\an7\\move({x0+10},{yb+70},{x0+30},{yb+70},0,320)\\alpha&HFF&\\t(0,300,0.5,\\alpha&H00&)\\fad(0,200)}}{esc(l2.strip())}")
         elif t['kind'] == 'judul':
             ev.append(f"Dialogue: 6,{ass_time(a)},{ass_time(b)},Kunci,,0,0,0,,{{\\an5\\pos({W//2},{y})\\fscx60\\fscy60\\t(0,200,\\fscx100\\fscy100)\\fad(0,200)}}{tx}")
             if t.get('sub2'):
@@ -437,13 +565,19 @@ def final(tl, G, spec, vid, aud, ass, out):
     fc = [f"[0:v]ass={ass}:fontsdir={FONTS}[v1]"]
     pos = {'kanan_atas': f'W-w-44:96', 'kiri_atas': '44:96', 'tengah_bawah': '(W-w)/2:H-h-170'}[G['logo']]
     pt0 = pen[0]['t0'] if pen else tl.t
+    il = spec.get('intro_logo'); t_in = float(il.get('dur', 1.6)) if il else 0.0
     fc.append(f"[2:v]scale=150:-1,format=rgba,colorchannelmixer=aa=0.92[lg]")
-    fc.append(f"[v1][lg]overlay={pos}:enable='lt(t,{pt0:.2f})'[v2]")
-    cur = '[v2]'
+    fc.append(f"[v1][lg]overlay={pos}:enable='between(t,{t_in:.2f},{pt0:.2f})'[v2]")
+    cur = '[v2]'; nxt = 3
+    if il:  # logo reveal: membesar halus (ease-out) + fade, lalu mengecil jadi logo pojok
+        args += ['-loop', '1', '-t', f'{t_in:.2f}', '-i', logo]
+        fc.append(f"[{nxt}:v]format=rgba,scale=w='trunc(340*(0.8+0.2*(1-pow(1-min(t/0.6,1),3)))/2)*2':h=-2:eval=frame,"
+                  f"fade=t=in:st=0:d=0.35:alpha=1,fade=t=out:st={t_in-0.3:.2f}:d=0.3:alpha=1[li]")
+        fc.append(f"{cur}[li]overlay=(W-w)/2:(H-h)/2-{il.get('naik', 260)}:eval=frame:enable='lt(t,{t_in:.2f})'[v2b]"); cur = '[v2b]'; nxt += 1
     if pen:
         png = f"{CACHE}/penutup_{spec['id']}.png"; penutup_png(G, spec, png)
         args += ['-loop', '1', '-t', f'{tl.t:.2f}', '-i', png]
-        fc.append(f"[3:v]format=rgba,fade=t=in:st={pt0:.2f}:d=0.35:alpha=1[pn]")
+        fc.append(f"[{nxt}:v]format=rgba,fade=t=in:st={pt0:.2f}:d=0.35:alpha=1[pn]")
         fc.append(f"{cur}[pn]overlay=0:0:enable='gte(t,{pt0:.2f})'[v3]"); cur = '[v3]'
     fc.append(f"{cur}fade=t=out:st={tl.t-0.35:.2f}:d=0.35,format=yuv420p[vo]")
     args += ['-filter_complex', ';'.join(fc), '-map', '[vo]', '-map', '1:a', '-t', f'{tl.t:.3f}',

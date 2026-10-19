@@ -41,3 +41,24 @@ Rantai perbaikan suara: high-pass, pengurang bising (afftdn), EQ kejelasan 3 kHz
  "penutup":{"judul":"Barokah Farm","sub":"..."}}
 ```
 Koreksi ejaan subtitle: `koreksi.json` (`_kata` untuk ganti kata, `_teks` untuk teks penuh per klip).
+
+## Komponen editing profesional (upgrade 19/10/2026)
+| Komponen | Cara kerja di mesin |
+|---|---|
+| Cutting, trimming, timeline | Potong per kata dari transkrip, jump cut di akhir kalimat, buang jeda, durasi kelipatan frame |
+| J-cut / L-cut, cutaway | Suara orang mulai sebelum gambarnya (`jcut`), B-roll menimpa saat orang bicara (`sisip`) |
+| Transisi halus | cut, dissolve, whip (slide + motion blur arah gerak), zoom, wipe; whoosh mulai 0.2 dtk sebelum potongan |
+| Color correction | Otomatis per shot: white balance (gray-world) + exposure (gamma) → semua shot disamakan (shot matching) |
+| LUT cinematic | `aset/lut/*.cube` (komersial, sinematik, hangat, natural) dibuat `lut.py`, melindungi warna kulit |
+| Stabilization | vid.stab 2 tahap untuk klip HP genggam |
+| Speed ramp & slow motion | `ramp` cepat→lambat dari sumber 60 fps, frame blending di bagian cepat |
+| Keyframe animation | `kf` zoom/pan dengan easing smoothstep; animasi teks dengan ease-out |
+| Motion blur | dblur di sekitar transisi whip, tmix pada bagian cepat speed ramp |
+| Masking & tracking | Deteksi wajah → kamera mengikuti subjek (auto-reframe) + vignette lembut berpusat di subjek |
+| Noise reduction audio | Filter dengung 50/100 Hz, de-click, RNNoise (jaringan saraf), FFT denoise, de-esser, EQ, kompresor |
+| Sound design & mixing | SFX (whoosh, tick, thump, riser) di titik yang pas, suara kandang asli, limiter, −14 LUFS |
+| Backsound | Selalu ≥ 9 dB di bawah suara orang; turun otomatis saat ada yang bicara |
+| SFX ikut ketukan | `musik.bpm` → potongan B-roll jatuh tepat di ketukan musik |
+| Subtitle & motion graphics | Subtitle ucapan kecil & bersih, logo reveal, lower third, kartu promo |
+
+Aturan sutradara AI: `sutradara/MASTER_PROMPT.txt` + `sutradara/TUGAS_SUTRADARA.md`.
