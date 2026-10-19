@@ -569,7 +569,7 @@ def final(tl, G, spec, vid, aud, ass, out):
     pen = [t for t in tl.texts if t['kind'] == 'penutup']
     args = ['ffmpeg', '-nostdin', '-y', '-loglevel', 'error', '-i', vid, '-i', aud, '-i', logo]
     fc = [f"[0:v]ass={ass}:fontsdir={FONTS}[v1]"]
-    pos = {'kanan_atas': f'W-w-44:{60 if LAND else 96}', 'kiri_atas': f'44:{60 if LAND else 96}', 'tengah_bawah': f'(W-w)/2:H-h-{60 if LAND else 170}'}[G['logo']]
+    pos = {'kanan_atas': f'W-w-44:{60 if LAND else 96}', 'kiri_atas': f'44:{60 if LAND else 96}', 'tengah_bawah': 'W-w-44:60' if LAND else '(W-w)/2:H-h-170'}[G['logo']]
     pt0 = pen[0]['t0'] if pen else tl.t
     il = spec.get('intro_logo'); t_in = float(il.get('dur', 1.6)) if il else 0.0
     fc.append(f"[2:v]scale={120 if LAND else 150}:-1,format=rgba,colorchannelmixer=aa=0.92[lg]")
