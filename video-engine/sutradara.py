@@ -77,7 +77,7 @@ Musik (dibuat mesin, aman hak cipta): {', '.join(MUSIK)}. Transisi: {', '.join(T
 - "file": "BarokahFarm-{info['tanggal']}-<no>-<Judul-Singkat>" tanpa spasi. "id": "A1", "A2", dst.
 - Keluaran video POTRAIT 1080x1920 untuk TikTok, Instagram, dan Facebook.
 
-## Contoh naskah yang sudah benar
+## Contoh BENTUK naskah (nama klip di contoh ini hanya penanda <...>; di naskahmu "src" WAJIB persis sama dengan nama klip pada judul "## nama:" di daftar bahan)
 {contoh_spec()}
 
 ## Bahan mentah ({len(K)} klip). Contact sheet tiap klip terlampir sebagai gambar (judul gambar = nama klip, label waktu di pojok).
