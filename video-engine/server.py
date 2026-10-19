@@ -56,6 +56,10 @@ class H(BaseHTTPRequestHandler):
                     if not ch: break
                     s.wfile.write(ch)
             return
+        if u.path == '/proses':
+            import subprocess
+            return s.kirim(200, dict(ps=subprocess.run(['ps', '-eo', 'pid,ppid,etime,pcpu,rss,args', '--sort=-pcpu'], capture_output=True, text=True).stdout[:6000],
+                                     df=subprocess.run(['df', '-h', pipeline.DATA], capture_output=True, text=True).stdout))
         if u.path == '/naskah':
             jid = q.get('tugas', [''])[0]; p = f'{pipeline.DATA}/tugas/{os.path.basename(jid)}/naskah.json'
             return s.kirim(200, json.load(open(p))) if os.path.exists(p) else s.kirim(404, dict(ok=False))

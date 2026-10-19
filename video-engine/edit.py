@@ -21,8 +21,10 @@ TH = os.environ.get('FF_THREADS', '2')
 VF_VERSI = 3  # naikkan bila filter video berubah agar cache shot dibuat ulang
 FONTS = f'{E}/fonts'
 
-def sh(cmd, quiet=True):
-    r = subprocess.run(cmd, capture_output=True, text=True)
+def sh(cmd, quiet=True, timeout=3600):
+    try: r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        print('PERINTAH MACET (timeout):', ' '.join(cmd)[:300], flush=True); sys.exit(1)
     if r.returncode != 0:
         print('PERINTAH GAGAL:', ' '.join(cmd)[:600]); print(r.stderr[-3000:]); sys.exit(1)
     return r.stdout
@@ -685,7 +687,19 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 def penutup_png(G, spec, out):
     gaya = G['penutup']
     js = f'{E}/penutup.js'
-    sh(['node', js, out, gaya, json.dumps(dict(spec.get('penutup', {}), w=W, h=H))])
+    import signal
+    logp = out + '.log'
+    with open(logp, 'w') as lf:  # proses grup sendiri + log ke file: Chromium yang tertinggal tidak bisa menahan pipa
+        pr = subprocess.Popen(['node', js, out, gaya, json.dumps(dict(spec.get('penutup', {}), w=W, h=H))],
+                              stdout=lf, stderr=lf, stdin=subprocess.DEVNULL, start_new_session=True)
+        try: pr.wait(timeout=120)
+        except subprocess.TimeoutExpired: print('  kartu penutup macet (timeout 120 dtk)', flush=True)
+        finally:
+            try: os.killpg(pr.pid, signal.SIGKILL)
+            except Exception: pass
+    ok = pr.returncode == 0 and os.path.exists(out)
+    if not ok: print('  kartu penutup gagal:', open(logp).read()[-500:], flush=True)
+    return ok
 
 def final(tl, G, spec, vid, aud, ass, out):
     logo = f'{E}/aset/logo.png'
@@ -704,7 +718,13 @@ def final(tl, G, spec, vid, aud, ass, out):
                   f"fade=t=in:st=0:d=0.35:alpha=1,fade=t=out:st={t_in-0.3:.2f}:d=0.3:alpha=1[li]")
         fc.append(f"{cur}[li]overlay=(W-w)/2:(H-h)/2-{Y(il.get('naik', 260))}:eval=frame:enable='lt(t,{t_in:.2f})'[v2b]"); cur = '[v2b]'; nxt += 1
     if pen:
-        png = f"{CACHE}/penutup_{spec['id']}.png"; penutup_png(G, spec, png)
+        png = f"{CACHE}/penutup_{spec['id']}.png"
+        if not (os.path.exists(png) or penutup_png(G, spec, png)):  # cadangan: kartu sederhana dari logo
+            from PIL import Image, ImageDraw
+            im = Image.new('RGBA', (W, H), (0, 0, 0, 0)); lg = Image.open(f'{E}/aset/logo.png').convert('RGBA').resize((min(W, H) // 3,) * 2)
+            d = ImageDraw.Draw(im); cw, chh = int(min(W, H) * 0.8), int(min(W, H) * 0.62)
+            d.rounded_rectangle([(W - cw) // 2, (H - chh) // 2, (W + cw) // 2, (H + chh) // 2], 48, fill=(30, 74, 44, 235))
+            im.alpha_composite(lg, ((W - lg.width) // 2, (H - chh) // 2 + 40)); im.save(png)
         args += ['-loop', '1', '-t', f'{tl.t:.2f}', '-i', png]
         fc.append(f"[{nxt}:v]format=rgba,fade=t=in:st={pt0:.2f}:d=0.35:alpha=1[pn]")
         fc.append(f"{cur}[pn]overlay=0:0:enable='gte(t,{pt0:.2f})'[v3]"); cur = '[v3]'

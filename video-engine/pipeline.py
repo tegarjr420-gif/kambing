@@ -109,11 +109,20 @@ def t_render(T, specs):
             p = f"{T.dir}/spec_{sp['id']}.json"; json.dump(sp, open(p, 'w'), ensure_ascii=False, indent=1)
             T.log(f"render {sp['id']} ({sp['gaya']}, ±{sp.get('_durasi', 0):.0f} dtk)")
             t0 = time.time()
-            r = subprocess.run([sys.executable, f'{E}/edit.py', p], capture_output=True, text=True, env=env_mesin(T))
-            with open(f'{T.dir}/render_{sp["id"]}.log', 'w') as f: f.write(r.stdout + '\n' + r.stderr)
-            if r.returncode != 0 or not os.path.exists(out):
-                T.log(f"  GAGAL render {sp['id']}: {(r.stdout + r.stderr)[-400:]}"); continue
-            teks = re.findall(r'^\s+teks (.*)$', r.stdout, re.M)
+            import signal
+            lp = f'{T.dir}/render_{sp["id"]}.log'
+            with open(lp, 'w') as lf:
+                pr = subprocess.Popen([sys.executable, f'{E}/edit.py', p], stdout=lf, stderr=lf, stdin=subprocess.DEVNULL,
+                                      env=env_mesin(T), start_new_session=True)
+                try: pr.wait(timeout=int(os.environ.get('RENDER_BATAS_DTK', '2700')))
+                except subprocess.TimeoutExpired: T.log(f"  render {sp['id']} melebihi batas waktu, dihentikan")
+                finally:
+                    try: os.killpg(pr.pid, signal.SIGKILL)
+                    except Exception: pass
+            keluaran = open(lp).read()
+            if pr.returncode != 0 or not os.path.exists(out):
+                T.log(f"  GAGAL render {sp['id']}: {keluaran[-400:]}"); continue
+            teks = re.findall(r'^\s+teks (.*)$', keluaran, re.M)
             T.log(f"  selesai {time.time() - t0:.0f} dtk; teks: {teks[0][:300] if teks else '-'}")
             shutil.rmtree(f"{T.dir}/cache/{sp['id']}", ignore_errors=True)
             for f in glob.glob(f'{T.dir}/cache/shot_*.mp4') + glob.glob(f'{T.dir}/cache/stab_*.trf'): os.remove(f)

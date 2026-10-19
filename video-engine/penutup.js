@@ -44,11 +44,12 @@ h1{font:800 104px/1 '${V.head}',sans-serif;margin:0;letter-spacing:${V.head === 
 </div></div></body></html>`;
 (async () => {
   const lokal = '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell';
-  const b = await chromium.launch(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : (require('fs').existsSync(lokal) ? { executablePath: lokal } : {}));
+  const ARGS = ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'];
+  const b = await chromium.launch(Object.assign({ args: ARGS, timeout: 60000 }, process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : (require('fs').existsSync(lokal) ? { executablePath: lokal } : {})));
   const p = await b.newPage({ viewport: { width: opt.w || 1080, height: opt.h || 1920 } });
   const fs = require('fs'); const tmp = `${E}/aset/_penutup_${process.pid}.html`; fs.writeFileSync(tmp, html);
-  await p.goto('file://' + tmp, { waitUntil: 'load' }); fs.unlinkSync(tmp);
-  await p.evaluate(() => document.fonts.ready);
-  await p.screenshot({ path: out, omitBackground: true });
+  await p.goto('file://' + tmp, { waitUntil: 'load', timeout: 30000 }); fs.unlinkSync(tmp);
+  await Promise.race([p.evaluate(() => document.fonts.ready), new Promise(r => setTimeout(r, 15000))]);
+  await p.screenshot({ path: out, omitBackground: true, timeout: 30000 });
   await b.close();
-})();
+})().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
