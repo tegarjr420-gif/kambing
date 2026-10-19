@@ -16,7 +16,7 @@ class Broll:
         for _ in range(len(s.k) * 2):
             if not s.k: return None
             n, k = s.k[s.i % len(s.k)]; s.i += 1
-            if tenang and k['goyang'] >= 1.0: continue
+            if tenang and k['goyang'] >= 2.0: continue
             if s.pos[n] + dur + 0.3 < k['dur']:
                 c = {'src': n, 'in': round(s.pos[n], 2), 'dur': dur}; s.pos[n] += dur + 0.6; return c
         return None

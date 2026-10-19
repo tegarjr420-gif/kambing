@@ -155,7 +155,7 @@ def periksa(spec, K, no, info):
         bag.append(b)
     if not bag: return spec, m + ['tidak ada bagian yang valid']
     if bag[-1].get('jenis') != 'penutup':
-        br = [n for n, k in K.items() if k and not k.get('rusak') and k.get('detik_ucapan', 0) < 0.5 and k['goyang'] < 1.5]
+        br = [n for n, k in K.items() if k and not k.get('rusak') and k.get('detik_ucapan', 0) < 0.5 and k['goyang'] < 3.0]
         if br: bag.append({'jenis': 'penutup', 'src': br[no % len(br)], 'in': 1.0, 'dur': 3.4})
     spec['bagian'] = bag
     spec.setdefault('penutup', {'judul': 'Barokah Farm', 'sub': 'Kambing · Domba · Aqiqah · Qurban'})

@@ -135,6 +135,19 @@ def cek_video(T, v):
     v['masalah'] = masalah
     return v
 
+def salin_qc(T, path, nama):
+    """opsional: salinan untuk pemeriksaan kualitas jarak jauh (Supabase Storage)"""
+    url, key = os.environ.get('QC_STORAGE_URL'), os.environ.get('QC_STORAGE_KEY')
+    if not url or not key: return
+    try:
+        with open(path, 'rb') as f:
+            r = requests.post(f'{url}/{T.id}/{nama}', data=f, timeout=600,
+                              headers={'apikey': key, 'Authorization': f'Bearer {key}', 'x-upsert': 'true',
+                                       'Content-Type': 'video/mp4' if nama.endswith('.mp4') else 'application/octet-stream'})
+        T.log(f'salinan QC {nama}: {r.status_code}')
+    except Exception as e:
+        T.log(f'salinan QC gagal: {e}')
+
 def t_unggah(T, hasil):
     T.tahap('unggah')
     if not jembatan.ada():
@@ -171,6 +184,9 @@ def jalankan(files, jid=None):
         if not specs: T.tahap('gagal'); lapor_wa('⚠️ Mesin video tidak bisa menyusun video dari mentahan terakhir (bahan kurang/rusak). Mohon kirim mentahan lain.', T.log); return T
         hasil = [cek_video(T, v) for v in t_render(T, specs)]
         T.st['video'] = hasil; T.simpan()
+        for v in hasil: salin_qc(T, v['file'], os.path.basename(v['file']))
+        for p in [f'{T.dir}/naskah.json', f'{T.dir}/log.txt', f'{T.dir}/ana/klip.json']:
+            if os.path.exists(p): salin_qc(T, p, os.path.basename(p) + '.txt')
         fj = t_unggah(T, hasil)
         baris = []
         for i, v in enumerate(hasil, 1):

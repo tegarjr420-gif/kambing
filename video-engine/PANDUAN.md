@@ -1,6 +1,6 @@
 # Mesin Editing Video Barokah Farm (Otomaya)
 
-Video vertikal 1080×1920, 30 fps, siap TikTok/Reels/Shorts. Semua langkah jalan di sandbox (ffmpeg + Python + Playwright).
+Video vertikal 1080×1920, 30 fps, siap TikTok/Reels/Facebook (opsi `--landscape` → 1920×1080). Berjalan otomatis di Railway (service **mesin-video**).
 
 ## Alur
 1. **Tarik mentahan** dari folder Drive "1. Video Mentah" (akses link: Pelihat) lewat workflow n8n
@@ -62,3 +62,34 @@ Koreksi ejaan subtitle: `koreksi.json` (`_kata` untuk ganti kata, `_teks` untuk 
 | Subtitle & motion graphics | Subtitle ucapan kecil & bersih, logo reveal, lower third, kartu promo |
 
 Aturan sutradara AI: `sutradara/MASTER_PROMPT.txt` + `sutradara/TUGAS_SUTRADARA.md`.
+
+## Otomatis di Railway (20/10/2026)
+```
+Admin unggah mentahan ke Drive "1. Video Mentah"
+  → mesin-video cek tiap 20 menit (mulai bila unggahan terakhir sudah ≥15 menit)
+  → unduh semua video → hapus mentahan dari Drive (masuk Sampah, bisa dipulihkan 30 hari)
+  → WA admin: "Mentahan diterima, sedang diedit"
+  → analisa: transkrip per kata, wajah, guncangan, kecerahan, contact sheet
+  → sutradara Gemini (lewat n8n "Kambing — Mesin Video") menulis 1–6 naskah, diperiksa mesin; bila gagal → aturan cadangan
+  → render (portrait 1080×1920), tulisan otomatis menghindari wajah & memilih latar tenang
+  → cek teknis (durasi, volume −14 LUFS)
+  → unggah ke Drive "2. Video Jadi/<tanggal jam>" (folder dibagikan via link)
+  → WA admin: daftar video + link + minta mentahan baru
+```
+| Bagian | Tempat |
+|---|---|
+| Server mesin | Railway project giving-success → service `mesin-video` (Dockerfile di folder ini), volume `/data` |
+| AI sutradara + lapor WA | n8n workflow "Kambing — Mesin Video (AI Sutradara & Lapor WA)" (kredensial Gemini yang sama dengan bot CS) |
+| Akses Drive | Apps Script "Jembatan Drive" milik akun pemilik Drive (hanya folder mentah & video jadi) |
+
+Variabel Railway: `ENGINE_KEY`, `GEMINI_PROXY_URL/KEY`, `GEMINI_MODEL`, `LAPOR_URL`, `JEMBATAN_URL/KEY`, `FOLDER_MENTAH`, `FOLDER_JADI`,
+`CEK_MENIT` (jeda cek), `TENANG_MENIT` (tunggu unggahan selesai), `CEK_OTOMATIS` (1 = aktif).
+
+Endpoint (kunci `?k=ENGINE_KEY`): `GET /sehat`, `GET /status`, `POST /cek?tenang=0` (cek sekarang), `POST /uji-ai`, `POST /uji-wa`, `POST /uji-drive`,
+`GET /hasil/<tugas>/<file>`, `GET /naskah?tugas=`.
+
+### Tips merekam (portrait)
+- Kamera utama 1x, 4K/1080p, 30 atau 60 fps, pegang stabil atau pakai tripod.
+- Orang yang bicara di tengah, terlihat dari dada/pinggang ke atas, sisakan ruang di atas kepala.
+- Mikrofon dekat (clip-on), hindari angin dan suara mesin.
+- Rekam B-roll: kambing dari dekat, kandang, pakan, proses timbang, pengiriman — tiap klip 5–15 detik.

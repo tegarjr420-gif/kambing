@@ -7,7 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY requirements.txt .
-RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
+RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt \
+ && pip3 install --break-system-packages --no-cache-dir --no-deps tinysoundfont==0.3.7 \
+ && python3 -c "import tinysoundfont, sherpa_onnx, cv2; print(cv2.__version__)"
 # model suara-ke-teks (Whisper turbo int8 + Dolphin CTC) dan soundfont musik
 RUN mkdir -p /models && cd /models \
  && curl -fsSL https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-turbo.tar.bz2 \

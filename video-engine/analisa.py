@@ -170,7 +170,7 @@ def analisa_klip(p, ana, nama):
     catatan = []
     if info['terang'] < 0.22: catatan.append('gelap')
     if info['tajam'] < 25: catatan.append('kurang tajam/buram')
-    if info['goyang'] >= 1.5: catatan.append('sangat goyang')
+    if info['goyang'] >= 4.0: catatan.append('sangat goyang')
     elif info['goyang'] >= 0.5: catatan.append('agak goyang (distabilkan)')
     info['catatan'] = catatan
     return info
