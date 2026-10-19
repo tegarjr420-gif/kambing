@@ -8,16 +8,21 @@ def norm(w):
     return re.sub(r'[^0-9a-z]', '', w.lower())
 
 def dolphin_words(tok):
-    ws = []
+    """token CTC -> kata dengan waktu mulai/akhir. Awal kata ditandai spasi biasa atau '▁'."""
+    ws = []; baru = True
     for t, ts in tok:
-        if t.startswith('▁') or not ws:
-            ws.append([t.replace('▁', ''), ts, ts])
+        mulai = t.startswith(' ') or t.startswith('▁')
+        isi = t.replace('▁', ' ').strip()
+        if mulai: baru = True
+        if not isi: continue
+        if baru or not ws:
+            ws.append([isi, ts, ts]); baru = False
         else:
-            ws[-1][0] += t; ws[-1][2] = ts
+            ws[-1][0] += isi; ws[-1][2] = ts
     out = []
     for i, (w, a, b) in enumerate(ws):
-        nxt = ws[i+1][1] if i+1 < len(ws) else b + 0.35
-        out.append({'w': w, 't0': a, 't1': min(nxt, b + 0.35)})
+        nxt = ws[i+1][1] if i+1 < len(ws) else b + 0.3
+        out.append({'w': w, 't0': a, 't1': min(nxt, b + 0.28)})
     return [x for x in out if norm(x['w'])]
 
 def align(text, tok, t0, t1):
