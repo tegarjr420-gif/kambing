@@ -1,0 +1,22 @@
+{"id": "V6", "file": "BarokahFarm-06-Tips-Hewan-Qurban-Edukasi", "gaya": "edukasi", "seed": 61,
+ "musik": {"gaya": "inspirasi", "seed": 8, "drop": 3.6, "db": 1.0},
+ "bagian": [
+  {"jenis": "broll", "klip": [{"src": "VID_20261019_153822", "in": 0.0, "dur": 3.6}], "suara": -10,
+   "teks": [{"kind": "judul", "at": 0.2, "dur": 3.3, "teks": "3 hal penting\\nmemilih hewan qurban"}]},
+  {"jenis": "broll", "klip": [
+     {"src": "VID_20261019_153506", "in": 0.0, "dur": 2.4},
+     {"src": "VID_20261019_154039", "in": 0.0, "dur": 2.4}], "suara": -10,
+   "teks": [{"kind": "kunci", "at": 0.2, "dur": 4.5, "teks": "1. Sehat & lincah", "sub2": "Mata cerah, aktif, mau makan"}]},
+  {"jenis": "broll", "klip": [
+     {"src": "VID_20261019_153412", "in": 2.4, "dur": 2.6},
+     {"src": "VID_20261019_153943", "in": 5.0, "dur": 2.2}], "suara": -10,
+   "teks": [{"kind": "kunci", "at": 0.2, "dur": 4.6, "teks": "2. Cukup umur", "sub2": "Sesuai syarat hewan qurban"}]},
+  {"jenis": "broll", "klip": [
+     {"src": "VID_20261019_153343", "in": 16.0, "dur": 2.4},
+     {"src": "VID_20261019_153633", "in": 0.3, "dur": 2.4}], "suara": -10,
+   "teks": [{"kind": "kunci", "at": 0.2, "dur": 4.6, "teks": "3. Tidak cacat", "sub2": "Tidak buta, pincang, atau sangat kurus"}]},
+  {"jenis": "broll", "klip": [{"src": "VID_20261019_153438", "in": 0.0, "dur": 3.0}], "suara": -10,
+   "teks": [{"kind": "kunci", "at": 0.2, "dur": 2.8, "teks": "Pilih langsung\\ndi Barokah Farm"}]},
+  {"jenis": "penutup", "src": "VID_20261019_153822", "in": 22.0, "dur": 3.6}
+ ],
+ "penutup": {"judul": "Barokah Farm", "sub": "Siap qurban & aqiqah"}}

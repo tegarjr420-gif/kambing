@@ -1,0 +1,113 @@
+{
+ "id": "V3",
+ "file": "BarokahFarm-03-Aqiqah-Qurban-Promo",
+ "gaya": "promo",
+ "seed": 31,
+ "musik": {
+  "gaya": "tropis",
+  "seed": 9,
+  "drop": 2.3
+ },
+ "bagian": [
+  {
+   "jenis": "broll",
+   "klip": [
+    {
+     "src": "VID_20261019_153412",
+     "in": 2.6,
+     "dur": 2.3
+    }
+   ],
+   "suara": -10,
+   "teks": [
+    {
+     "kind": "kunci",
+     "at": 0.15,
+     "dur": 2.1,
+     "teks": "AQIQAH\\nQURBAN · PESTA"
+    }
+   ]
+  },
+  {
+   "jenis": "bicara",
+   "src": "20261019_160933",
+   "in": 0.0,
+   "out": 11.25,
+   "rapat": 0.4,
+   "sisip": [
+    {
+     "at": 3.9,
+     "dur": 1.0,
+     "src": "VID_20261019_153633",
+     "in": 0.5
+    },
+    {
+     "at": 4.9,
+     "dur": 0.9,
+     "src": "VID_20261019_153943",
+     "in": 3.0
+    }
+   ]
+  },
+  {
+   "jenis": "broll",
+   "klip": [
+    {
+     "src": "VID_20261019_153822",
+     "in": 0.0,
+     "dur": 2.0
+    },
+    {
+     "src": "VID_20261019_153506",
+     "in": 6.0,
+     "dur": 2.0
+    },
+    {
+     "src": "VID_20261019_154039",
+     "in": 4.0,
+     "dur": 2.0
+    }
+   ],
+   "teks": [
+    {
+     "kind": "kunci",
+     "at": 0.1,
+     "dur": 1.9,
+     "teks": "GRATIS ONGKIR",
+     "sub2": "se-Jabodetabek"
+    },
+    {
+     "kind": "kunci",
+     "at": 2.1,
+     "dur": 1.9,
+     "teks": "DP MULAI Rp100RB",
+     "sub2": "per ekor"
+    },
+    {
+     "kind": "kunci",
+     "at": 4.1,
+     "dur": 1.9,
+     "teks": "PILIH DI KATALOG",
+     "sub2": "barokahfarm.pages.dev"
+    }
+   ]
+  },
+  {
+   "jenis": "bicara",
+   "src": "20261019_163312",
+   "in": 2.72,
+   "out": 11.2,
+   "rapat": 0.45
+  },
+  {
+   "jenis": "penutup",
+   "src": "VID_20261019_153412",
+   "in": 7.0,
+   "dur": 3.6
+  }
+ ],
+ "penutup": {
+  "judul": "Barokah Farm",
+  "sub": "Aqiqah · Qurban · Pesta"
+ }
+}

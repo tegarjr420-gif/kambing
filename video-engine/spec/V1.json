@@ -1,0 +1,113 @@
+{
+ "id": "V1",
+ "file": "BarokahFarm-01-Kenalan-Sinematik",
+ "gaya": "sinematik",
+ "seed": 11,
+ "musik": {
+  "gaya": "sinematik",
+  "seed": 7,
+  "drop": 3.0
+ },
+ "bagian": [
+  {
+   "jenis": "broll",
+   "klip": [
+    {
+     "src": "VID_20261019_153227",
+     "in": 4.0,
+     "dur": 2.2
+    },
+    {
+     "src": "VID_20261019_153822",
+     "in": 0.2,
+     "dur": 2.0
+    }
+   ],
+   "teks": [
+    {
+     "kind": "judul",
+     "at": 0.3,
+     "dur": 3.6,
+     "teks": "Barokah Farm",
+     "sub2": "Peternakan kambing & domba di Tangerang"
+    }
+   ]
+  },
+  {
+   "jenis": "bicara",
+   "src": "20261019_162815",
+   "in": 0.1,
+   "out": 12.95,
+   "rapat": 0.55,
+   "sisip": [
+    {
+     "at": 5.2,
+     "dur": 2.2,
+     "src": "VID_20261019_153343",
+     "in": 16.0
+    },
+    {
+     "at": 9.2,
+     "dur": 1.6,
+     "src": "VID_20261019_153822",
+     "in": 10.0
+    }
+   ]
+  },
+  {
+   "jenis": "broll",
+   "klip": [
+    {
+     "src": "VID_20261019_153412",
+     "in": 2.6,
+     "dur": 2.2
+    },
+    {
+     "src": "VID_20261019_153506",
+     "in": 0.0,
+     "dur": 2.0
+    },
+    {
+     "src": "VID_20261019_153343",
+     "in": 21.0,
+     "dur": 2.0
+    }
+   ],
+   "suara": -8,
+   "teks": [
+    {
+     "kind": "kunci",
+     "at": 0.4,
+     "dur": 3.4,
+     "teks": "Sejak 2004"
+    }
+   ]
+  },
+  {
+   "jenis": "bicara",
+   "src": "20261019_163227",
+   "in": 0.2,
+   "out": 6.7,
+   "rapat": 0.6,
+   "sisip": [
+    {
+     "at": 0.0,
+     "dur": 1.4,
+     "src": "VID_20261019_153822",
+     "in": 22.5
+    }
+   ],
+   "fit": "blur"
+  },
+  {
+   "jenis": "penutup",
+   "src": "VID_20261019_153227",
+   "in": 10.0,
+   "dur": 3.6
+  }
+ ],
+ "penutup": {
+  "judul": "Barokah Farm",
+  "sub": "Aman · Sehat · Utuh · Halal"
+ }
+}

@@ -1,0 +1,15 @@
+{"id": "V2", "file": "BarokahFarm-02-Reseller-Edukasi", "gaya": "edukasi", "seed": 21,
+ "musik": {"gaya": "akustik", "seed": 4, "drop": 0},
+ "bagian": [
+  {"jenis": "bicara", "src": "20261019_161116", "in": 0.0, "out": 12.75, "rapat": 0.4,
+   "kata": [{"at": 1.0, "dur": 1.5, "teks": "RESELLER?"},
+            {"at": 6.8, "dur": 1.6, "teks": "AGEN BESAR\\nDI TANGERANG"},
+            {"at": 9.9, "dur": 1.9, "teks": "HARGA\\nBERSAING"}],
+   "sisip": [{"at": 3.0, "dur": 1.6, "src": "VID_20261019_153438", "in": 0.3},
+             {"at": 8.3, "dur": 1.4, "src": "VID_20261019_153822", "in": 21.0}]},
+  {"jenis": "bicara", "src": "20261019_163028", "in": 3.35, "out": 11.6, "rapat": 0.4,
+   "kata": [{"at": 4.3, "dur": 1.6, "teks": "BELI PRIBADI\\nJUGA BISA"}],
+   "sisip": [{"at": 1.4, "dur": 1.5, "src": "VID_20261019_153943", "in": 5.0}]},
+  {"jenis": "penutup", "src": "VID_20261019_153506", "in": 0.0, "dur": 3.6}
+ ],
+ "penutup": {"judul": "Barokah Farm", "sub": "Partner reseller kambing & domba"}}

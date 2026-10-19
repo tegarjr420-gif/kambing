@@ -1,0 +1,24 @@
+{"id": "V4", "file": "BarokahFarm-04-Kualitas-Hook", "gaya": "hook", "seed": 41,
+ "musik": {"gaya": "pop", "seed": 12, "drop": 2.4},
+ "bagian": [
+  {"jenis": "broll", "klip": [
+     {"src": "VID_20261019_153822", "in": 1.0, "dur": 0.8},
+     {"src": "VID_20261019_153412", "in": 3.0, "dur": 0.8},
+     {"src": "VID_20261019_153343", "in": 17.0, "dur": 0.8}], "suara": -6,
+   "teks": [{"kind": "kunci", "at": 0.05, "dur": 2.35, "teks": "CARI DOMBA\\nKUALITAS?"}]},
+  {"jenis": "bicara", "src": "20261019_160657", "in": 0.4, "out": 8.45, "rapat": 0.35,
+   "kata": [{"at": 3.1, "dur": 1.3, "teks": "TERBAIK"}, {"at": 5.4, "dur": 1.5, "teks": "HARGA\\nBERSAING"}],
+   "sisip": [{"at": 1.3, "dur": 0.9, "src": "VID_20261019_153506", "in": 0.3}]},
+  {"jenis": "broll", "klip": [
+     {"src": "VID_20261019_153822", "in": 10.2, "dur": 0.75},
+     {"src": "VID_20261019_153943", "in": 0.2, "dur": 0.75},
+     {"src": "VID_20261019_153438", "in": 0.5, "dur": 0.75},
+     {"src": "VID_20261019_154039", "in": 0.3, "dur": 0.75},
+     {"src": "VID_20261019_153343", "in": 5.5, "dur": 0.75},
+     {"src": "VID_20261019_153822", "in": 14.2, "dur": 0.75},
+     {"src": "VID_20261019_153506", "in": 6.2, "dur": 0.75},
+     {"src": "VID_20261019_153412", "in": 0.2, "dur": 0.9}], "suara": -9,
+   "teks": [{"kind": "kunci", "at": 0.1, "dur": 2.9, "teks": "STOK SIAP\\nPILIH"}, {"kind": "kunci", "at": 3.1, "dur": 3.0, "teks": "CEK KATALOG"}]},
+  {"jenis": "penutup", "src": "VID_20261019_153822", "in": 21.0, "dur": 3.4}
+ ],
+ "penutup": {"judul": "Barokah Farm", "sub": "Kambing & domba berkualitas"}}

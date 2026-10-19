@@ -1,0 +1,26 @@
+{"id": "V5", "file": "BarokahFarm-05-Keliling-Kandang-Vlog", "gaya": "vlog", "seed": 51,
+ "musik": {"gaya": "lofi", "seed": 3, "drop": 0, "db": 0},
+ "bagian": [
+  {"jenis": "broll", "klip": [
+     {"src": "VID_20261019_153227", "in": 0.0, "dur": 3.2},
+     {"src": "VID_20261019_153227", "in": 7.6, "dur": 2.4},
+     {"src": "VID_20261019_153227", "in": 10.3, "dur": 2.8}], "suara": -4,
+   "teks": [{"kind": "kunci", "at": 0.3, "dur": 2.8, "teks": "Keliling kandang\\nBarokah Farm"},
+            {"kind": "kunci", "at": 3.5, "dur": 2.0, "teks": "lorongnya kering\\n& bersih", "y": 820},
+            {"kind": "kunci", "at": 5.8, "dur": 2.4, "teks": "lagi pada makan", "y": 820}]},
+  {"jenis": "broll", "klip": [
+     {"src": "VID_20261019_154039", "in": 0.0, "dur": 2.4},
+     {"src": "VID_20261019_154039", "in": 4.2, "dur": 2.6},
+     {"src": "VID_20261019_153343", "in": 9.0, "dur": 2.2},
+     {"src": "VID_20261019_153254", "in": 0.2, "dur": 2.2}], "suara": -4,
+   "teks": [{"kind": "kunci", "at": 0.3, "dur": 2.0, "teks": "kambing\\ntelinga panjang", "y": 820},
+            {"kind": "kunci", "at": 5.2, "dur": 2.0, "teks": "domba-domba\\nyang penasaran", "y": 820}]},
+  {"jenis": "bicara", "src": "20261019_161304", "in": 0.5, "out": 8.5, "rapat": 0.5,
+   "sisip": [{"at": 4.0, "dur": 1.6, "src": "VID_20261019_153343", "in": 12.5}]},
+  {"jenis": "broll", "klip": [
+     {"src": "VID_20261019_153343", "in": 21.0, "dur": 2.3},
+     {"src": "VID_20261019_153227", "in": 18.0, "dur": 2.0}], "suara": -4,
+   "teks": [{"kind": "kunci", "at": 0.3, "dur": 3.8, "teks": "sampai jumpa\\ndi kandang!", "y": 820}]},
+  {"jenis": "penutup", "src": "VID_20261019_153227", "in": 21.0, "dur": 3.6}
+ ],
+ "penutup": {"judul": "Barokah Farm", "sub": "Main ke kandang? Kabari dulu ya"}}
