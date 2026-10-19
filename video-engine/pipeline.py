@@ -170,6 +170,9 @@ def judul_dari(file): return re.sub(r'^BarokahFarm-\d+-\d+-', '', os.path.basena
 
 def jalankan(files, jid=None, uji=False):
     if not KUNCI.acquire(blocking=False): return None
+    if not jid:  # tugas baru: bersihkan mentahan & cache tugas lama agar disk cukup
+        for d in glob.glob(f'{DATA}/tugas/*'):
+            shutil.rmtree(f'{d}/raw', ignore_errors=True); shutil.rmtree(f'{d}/cache', ignore_errors=True)
     T = Tugas(jid); SEKARANG['tugas'] = T.id
     if uji: T.st['uji'] = True; T.simpan()
     awal = '🧪 *UJI COBA MESIN* (mentahan lama, abaikan bila bukan Anda)\n' if T.st.get('uji') else ''
@@ -201,11 +204,10 @@ def jalankan(files, jid=None, uji=False):
                 (f"\n\n📁 Semua video: {fj['url']}" if fj else '') +
                 (f"\n\n🗑️ {dihapus} mentahan sudah dihapus dari Drive." if dihapus else '') +
                 "\n📥 Silakan kirim *mentahan baru* ke folder *1. Video Mentah* di Drive (rekam potrait, stabil, suara dekat).")
-        if sumber != 'gemini': teks += '\n\nℹ️ Video kali ini disusun tanpa AI (Gemini belum aktif/gagal).'
+        if sumber != 'gemini': teks += '\n\nℹ️ Video kali ini disusun TANPA AI (Gemini gangguan berjam-jam), jadi isinya belum disaring. Mohon tonton dulu sebelum diposting.'
         lapor_wa(teks, T.log)
         T.tahap('selesai'); T.st['selesai'] = now().isoformat(); T.simpan()
-        shutil.rmtree(f'{T.dir}/raw', ignore_errors=True); shutil.rmtree(f'{T.dir}/cache', ignore_errors=True)
-        shutil.rmtree(f'{T.dir}/ana/wav', ignore_errors=True)
+        shutil.rmtree(f'{T.dir}/cache', ignore_errors=True); shutil.rmtree(f'{T.dir}/ana/wav', ignore_errors=True)
         return T
     except Exception:
         T.log('ERROR\n' + traceback.format_exc()); T.st['tahap_error'] = T.st.get('tahap'); T.tahap('error'); return T
@@ -245,3 +247,17 @@ def cek(log=print, tenang_menit=None, uji=False):
         if umur < tenang: return f'menunggu unggahan selesai ({umur:.0f}/{tenang:.0f} menit)'
     threading.Thread(target=jalankan, args=(files, None, uji), daemon=True).start()
     return f'mulai {len(files)} file'
+
+def ulang(jid, dari='sutradara'):
+    """jalankan ulang tugas lama mulai dari tahap tertentu (mentahan masih tersimpan di server)"""
+    d = f'{DATA}/tugas/{jid}'
+    if not os.path.isdir(f'{d}/raw') or not os.listdir(f'{d}/raw'): return 'mentahan tugas itu sudah tidak ada'
+    if KUNCI.locked(): return 'sibuk'
+    st = json.load(open(f'{d}/status.json'))
+    if dari in ('sutradara', 'render'):
+        if dari == 'sutradara' and os.path.exists(f'{d}/naskah.json'): os.rename(f'{d}/naskah.json', f'{d}/naskah_lama_{int(time.time())}.json')
+        for f in glob.glob(f'{d}/out/*.mp4'): os.remove(f)
+        st['video'] = []; st.pop('folder_jadi', None)
+    st['tahap'] = 'ulang'; st['ulang'] = 0; json.dump(st, open(f'{d}/status.json', 'w'))
+    threading.Thread(target=jalankan, args=([], jid), daemon=True).start()
+    return f'ulang {jid} dari {dari}'

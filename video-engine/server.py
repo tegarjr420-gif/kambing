@@ -3,7 +3,7 @@ import os, json, threading, time, glob, urllib.parse, traceback
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import pipeline
 
-VERSI = '2026-10-20.1'
+VERSI = '2026-10-20.2'
 KEY = os.environ.get('ENGINE_KEY', '')
 MENIT = float(os.environ.get('CEK_MENIT', '20'))
 TERAKHIR = {'cek': None, 'hasil': None}
@@ -37,7 +37,7 @@ class H(BaseHTTPRequestHandler):
     def log_message(s, *a): pass
     def do_GET(s):
         u = urllib.parse.urlparse(s.path); q = urllib.parse.parse_qs(u.query)
-        if u.path in ('/cek', '/uji-ai', '/uji-wa', '/uji-drive'): return s.do_POST()
+        if u.path in ('/cek', '/uji-ai', '/uji-wa', '/uji-drive', '/ulang'): return s.do_POST()
         if u.path in ('/', '/sehat'):
             return s.kirim(200, dict(ok=True, versi=VERSI, sibuk=pipeline.SEKARANG['tugas'], cek_terakhir=TERAKHIR))
         if not s.boleh(q): return s.kirim(403, dict(ok=False, galat='kunci'))
@@ -67,6 +67,8 @@ class H(BaseHTTPRequestHandler):
             tn = q.get('tenang', [None])[0]
             r = pipeline.cek(tenang_menit=float(tn) if tn is not None else None, uji=q.get('uji', ['0'])[0] == '1'); TERAKHIR['hasil'] = r
             return s.kirim(200, dict(ok=True, hasil=r))
+        if u.path == '/ulang':
+            return s.kirim(200, dict(ok=True, hasil=pipeline.ulang(q.get('tugas', [''])[0], q.get('dari', ['sutradara'])[0])))
         if u.path == '/uji-ai':  # tes koneksi Gemini lewat n8n
             import sutradara
             try:

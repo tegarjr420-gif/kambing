@@ -184,7 +184,9 @@ def tulis(K, info, log=print):
     gambar = [(n, f"{info['ana']}/sheet/{n}.jpg") for n, k in K.items() if k and not k.get('rusak') and os.path.exists(f"{info['ana']}/sheet/{n}.jpg")]
     teks = prompt(K, info)
     masalah_lalu = ''
-    for coba in range(2):
+    tunggu_maks = float(os.environ.get('AI_TUNGGU_MENIT', '180')) * 60; t_mulai = time.time()
+    jeda = [60, 120, 240, 480, 900]; gagal_beruntun = 0; ditolak = 0
+    while True:
         try:
             t0 = time.time()
             out, use = panggil_gemini(teks + masalah_lalu, gambar)
@@ -198,14 +200,21 @@ def tulis(K, info, log=print):
                 else:
                     hasil.append(sp2)
                     if mm: log(f'  naskah {i} diperbaiki otomatis: ' + '; '.join(mm))
-            if hasil and (not masalah or coba == 1):
+            if hasil and (not masalah or ditolak >= 1):
                 return hasil, J.get('catatan', ''), 'gemini'
+            ditolak += 1
+            if ditolak > 2: raise RuntimeError('naskah Gemini terus ditolak mesin')
             masalah_lalu = ('\n\n## PERBAIKI: percobaan sebelumnya ditolak mesin karena:\n- ' + '\n- '.join(masalah) +
                             '\nTulis ulang SELURUH jawaban dengan memperbaiki masalah itu.')
             log('  naskah ditolak, minta perbaikan: ' + '; '.join(masalah)[:400])
+            continue
         except Exception as e:
-            log(f'sutradara Gemini gagal (percobaan {coba + 1}): {str(e)[:300]}')
-            if coba == 0: time.sleep(20)
+            gagal_beruntun += 1
+            log(f'sutradara Gemini gagal (percobaan {gagal_beruntun}): {str(e)[:300]}')
+            if time.time() - t_mulai > tunggu_maks: break
+            d = jeda[min(gagal_beruntun - 1, len(jeda) - 1)]
+            log(f'  coba lagi dalam {d // 60} menit (Gemini sibuk/gangguan biasanya sementara)')
+            time.sleep(d)
     import aturan
     hasil = []
     for sp in aturan.susun(K, info):
