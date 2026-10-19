@@ -56,6 +56,17 @@ class H(BaseHTTPRequestHandler):
                     if not ch: break
                     s.wfile.write(ch)
             return
+        if u.path == '/pakai-spec':  # uji: pakai naskah contoh dari folder spec/ untuk tugas yang mentahannya masih ada
+            jid = os.path.basename(q.get('tugas', [''])[0]); d = f'{pipeline.DATA}/tugas/{jid}'
+            if not os.path.isdir(f'{d}/raw'): return s.kirim(404, dict(ok=False, galat='tugas/mentahan tidak ada'))
+            specs = []
+            for i, n in enumerate(q.get('spec', [''])[0].split(','), 1):
+                sp = json.load(open(f'{os.path.dirname(os.path.abspath(__file__))}/spec/{os.path.basename(n)}.json'))
+                sp['id'] = f'A{i}'; sp['file'] = f"BarokahFarm-{jid[:8]}-{i:02d}-" + sp.get('file', n).split('-')[-1]
+                specs.append(sp)
+            if os.path.exists(f'{d}/naskah.json'): os.rename(f'{d}/naskah.json', f'{d}/naskah_lama_{int(time.time())}.json')
+            json.dump(dict(video=specs, catatan='naskah contoh (uji render)', sumber='manual'), open(f'{d}/naskah.json', 'w'), ensure_ascii=False)
+            return s.kirim(200, dict(ok=True, hasil=pipeline.ulang(jid, 'render')))
         if u.path == '/proses':
             import subprocess
             return s.kirim(200, dict(ps=subprocess.run(['ps', '-eo', 'pid,ppid,etime,pcpu,rss,args', '--sort=-pcpu'], capture_output=True, text=True).stdout[:6000],
