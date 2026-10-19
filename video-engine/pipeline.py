@@ -205,7 +205,7 @@ def jalankan(files, jid=None, uji=False):
             if T.st['tunda_ke'] >= 48:
                 lapor_wa(awal + '⚠️ AI sutradara (Claude) tidak bisa dipakai lebih dari 24 jam, editing belum bisa dibuat. Cek saldo & batas di platform.claude.com.', T.log)
                 T.tahap('gagal'); return T
-            T.tahap('tunggu_ai'); T.log('ditunda: menunggu Gemini, dicoba lagi', T.st['tunda_sampai']); return T
+            T.tahap('tunggu_ai'); T.log('ditunda: menunggu AI sutradara, dicoba lagi', T.st['tunda_sampai']); return T
         if not specs: T.tahap('gagal'); lapor_wa('⚠️ Mesin video tidak bisa menyusun video dari mentahan terakhir (bahan kurang/rusak). Mohon kirim mentahan lain.', T.log); return T
         hasil = [cek_video(T, v) for v in t_render(T, specs)]
         T.st['video'] = hasil; T.simpan()
