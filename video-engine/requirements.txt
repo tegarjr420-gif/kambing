@@ -1,0 +1,7 @@
+numpy==2.5.3
+scipy==1.18.1
+opencv-python-headless==4.14.0.94
+pillow==12.3.0
+requests==2.34.2
+sherpa-onnx==1.13.8
+tinysoundfont==0.3.7

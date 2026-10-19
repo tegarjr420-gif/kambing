@@ -1,5 +1,6 @@
 // Kartu penutup (CTA) transparan 1080x1920. node penutup.js out.png <terang|gelap|kuning|hijau> '{"judul":"..."}'
-const { chromium } = require('/tmp/claude-0/-home-claude/8530fe1f-175c-5546-b869-127bbb89636c/scratchpad/node_modules/playwright');
+let pw; try { pw = require('playwright'); } catch (e) { pw = require('/tmp/claude-0/-home-claude/8530fe1f-175c-5546-b869-127bbb89636c/scratchpad/node_modules/playwright'); }
+const { chromium } = pw;
 const path = require('path');
 const [out, varian = 'terang', optJson = '{}'] = process.argv.slice(2);
 const opt = JSON.parse(optJson || '{}');
@@ -42,7 +43,8 @@ h1{font:800 104px/1 '${V.head}',sans-serif;margin:0;letter-spacing:${V.head === 
 <div class="chips">${(opt.chips || ['Gratis ongkir Jabodetabek', 'DP mulai Rp100rb']).map(c => `<span class="chip">${c}</span>`).join('')}</div>
 </div></div></body></html>`;
 (async () => {
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell' });
+  const lokal = '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell';
+  const b = await chromium.launch(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : (require('fs').existsSync(lokal) ? { executablePath: lokal } : {}));
   const p = await b.newPage({ viewport: { width: opt.w || 1080, height: opt.h || 1920 } });
   const fs = require('fs'); const tmp = `${E}/aset/_penutup_${process.pid}.html`; fs.writeFileSync(tmp, html);
   await p.goto('file://' + tmp, { waitUntil: 'load' }); fs.unlinkSync(tmp);

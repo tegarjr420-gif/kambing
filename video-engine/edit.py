@@ -10,12 +10,13 @@ from kata import kata_klip
 E = os.path.dirname(os.path.abspath(__file__))
 S = os.path.dirname(E)
 RAW = os.environ.get('RAW', f'{S}/raw')
-ANA = f'{S}/ana'
+ANA = os.environ.get('ANA', f'{S}/ana')
 W, H, FPS, SR = 1080, 1920, 30, 48000
 LAND = False  # True = keluaran landscape 1920x1080
 def Y(y): return int(y * H / 1920)               # posisi vertikal dirancang untuk 1920, diskalakan
 def FS(z): return int(z * (0.85 if LAND else 1))  # ukuran huruf
-CACHE = f'{E}/cache'; os.makedirs(CACHE, exist_ok=True)
+CACHE = os.environ.get('CACHE', f'{E}/cache'); os.makedirs(CACHE, exist_ok=True)
+OUT = os.environ.get('OUT', f'{E}/out')
 VF_VERSI = 3  # naikkan bila filter video berubah agar cache shot dibuat ulang
 FONTS = f'{E}/fonts'
 
@@ -77,6 +78,17 @@ def face_cx(src, a, b):
     tr = [x for t, x in face_track(src) if a - 0.3 <= t <= b + 0.3]
     if not tr: return None
     return float(np.median(tr))
+
+_klip = None
+def perlu_stab(src):
+    """stabilisasi bila klip terdeteksi goyang (analisa.py -> klip.json); klip lama tanpa data: pakai pola nama HP"""
+    global _klip
+    if _klip is None:
+        try: _klip = json.load(open(f'{ANA}/klip.json'))
+        except Exception: _klip = {}
+    k = _klip.get(src)
+    if k and 'goyang' in k: return k['goyang'] >= 0.5
+    return src.startswith('VID_')
 
 # ---------------------------------------------------------------- koreksi warna otomatis
 _cc = None
@@ -181,13 +193,26 @@ def build(spec):
                 prev[-1]['dur'] += jc; firstA['a'] += jc; firstA['dur'] -= jc; firstA['start'] += jc
                 if firstA.get('path'): firstA['path'] = [[round(t - jc, 2), x] for t, x in firstA['path'] if t - jc >= -0.25]
                 tl.bounds = [(t + jc if abs(t - seg_start) < 1e-6 else t, tr) for t, tr in tl.bounds]
+            # 'pada': jangkar ke kata yang diucapkan (lebih aman daripada detik, karena jeda sudah dipotong)
+            seg_words = [w for w in tl.words if w['t0'] >= seg_start - 1e-6]
+            def jangkar(item, dflt=0.0):
+                if item.get('pada'):
+                    kunci_ = [re.sub(r'[^0-9a-z]', '', x.lower()) for x in str(item['pada']).split()]
+                    nw = [re.sub(r'[^0-9a-z]', '', w['w'].lower()) for w in seg_words]
+                    for i in range(len(nw)):
+                        if nw[i:i + len(kunci_)] == kunci_:
+                            return max(0.0, seg_words[i]['t0'] - seg_start + item.get('geser', 0.0))
+                return item.get('at', dflt)
+            for c in b.get('sisip', []): c['at'] = jangkar(c)
+            for kk in b.get('kata', []) + b.get('teks', []): kk['at'] = jangkar(kk)
             # sisipan B-roll di atas suara (cutaway). at: detik dari awal bagian ini (setelah dirapatkan)
             for c in b.get('sisip', []):
+                if c['at'] >= seg_dur - 0.3: continue
                 t0 = seg_start + c['at']; t1 = min(seg_start + seg_dur, t0 + c['dur'])
                 tl.shots.append(dict(kind='B', src=c['src'], a=c['in'], dur=t1 - t0, z0=1.0, z1=1.0 + G['gerak_broll'][1], cx=c.get('cx', 0.5), cy=0.5,
                                      start=t0, overlay=True, lambat=c.get('lambat', 1.0), fit=c.get('fit', 'crop'),
                                      cc=cc_shot(c['src'], c['in'], c['in'] + c['dur']) if G.get('cc') else None,
-                                     stab=bool(G.get('stab') and c['src'].startswith('VID_') and c.get('stab', True))))
+                                     stab=bool(G.get('stab') and perlu_stab(c['src']) and c.get('stab', True))))
             for kk in b.get('kata', []):
                 tl.texts.append(dict(kind='kunci', t0=seg_start + kk['at'], t1=seg_start + kk['at'] + kk.get('dur', 1.6), teks=kk['teks'], y=kk.get('y')))
                 if G['sfx']['kunci']: tl.sfx.append((seg_start + kk['at'], G['sfx']['kunci'], G.get('sfx_db', {}).get('kunci', -8)))
@@ -214,7 +239,7 @@ def build(spec):
                                      start=tl.t, lambat=lm, fit=c.get('fit', b.get('fit', 'crop')), gerak=mv, blur=(j == 'penutup'),
                                      ramp=c.get('ramp'), kf=c.get('kf'),
                                      cc=cc_shot(c['src'], c['in'], c['in'] + d / lm) if G.get('cc') else None,
-                                     stab=bool(G.get('stab') and c['src'].startswith('VID_') and c.get('stab', True) and j != 'penutup')))
+                                     stab=bool(G.get('stab') and perlu_stab(c['src']) and c.get('stab', True) and j != 'penutup')))
                 if c.get('suara', b.get('suara')) is not None:
                     tl.amb.append(dict(src=c['src'], a=c['in'], dur=d, start=tl.t, gain=c.get('suara', b.get('suara')), lambat=c.get('lambat', lam)))
                 tl.t += d
@@ -474,6 +499,71 @@ def ass_time(t):
 
 def esc(s): return s.replace('{', '(').replace('}', ')').replace('\\n', '\\N').replace('\n', '\\N')
 
+FAKTOR_FONT = {'Anton': 0.46, 'Montserrat': 0.64, 'Bricolage Grotesque': 0.57, 'Playfair Display': 0.54, 'Caveat': 0.42,
+               'Plus Jakarta Sans': 0.57, 'Poppins': 0.61}
+PETA = []  # peta wajah video hasil: [(t, [[x0,y0,x1,y1]..])], diisi di main()
+VIDEO_POLOS = None  # video tanpa teks, untuk menilai keramaian latar
+
+def ukur(teks, size, font):
+    lines = [re.sub(r'\{[^}]*\}', '', l) for l in teks.split('\\N')]
+    f = FAKTOR_FONT.get(font, 0.58)
+    lw = [len(l) * size * f * (1.1 if l.isupper() else 1.0) for l in lines]
+    return max(lw + [size]), len(lines) * size * 1.2
+
+def tumpang(a, b, kotak):
+    from wajahtl import tabrakan
+    return tabrakan(PETA, a, b, kotak) if PETA else 0.0
+
+def pilih(a, b, w, h, x_def, y_def, ys, xs=None, batas=None, ambang=0.02, pad=24):
+    """pilih titik tengah (x,y) teks yang tidak menutupi wajah; utamakan posisi asal"""
+    y_lo, y_hi = batas or (60, H - 60)
+    cands = []
+    for x in (xs or [x_def]):
+        for y in [y_def] + [v for v in ys if abs(v - y_def) > 20]:
+            if y - h / 2 < y_lo or y + h / 2 > y_hi or x - w / 2 < 30 or x + w / 2 > W - 30: continue
+            cands.append((x, y))
+    if not cands: return x_def, y_def, 0.0
+    def kot(x, y): return (x - w / 2 - pad, y - h / 2 - pad, x + w / 2 + pad, y + h / 2 + pad)
+    s0 = tumpang(a, b, kot(x_def, y_def))
+    if s0 <= ambang: return x_def, y_def, s0
+    def ramai(c):
+        if not VIDEO_POLOS: return 0.0
+        from wajahtl import keramaian
+        return sum(keramaian(VIDEO_POLOS, W, H, tt, kot(*c)) for tt in (a + 0.3, (a + b) / 2)) / 2
+    aman = [c for c in cands if tumpang(a, b, kot(*c)) <= ambang]
+    if aman:  # di antara posisi yang tidak menutupi wajah: pilih latar paling tenang, lalu yang paling dekat posisi asal
+        best = min(aman, key=lambda c: ramai(c) * 1.0 + (abs(c[0] - x_def) / W + abs(c[1] - y_def) / H) * 0.35)
+    else:
+        best = min(cands, key=lambda c: (round(tumpang(a, b, kot(*c)), 3), abs(c[0] - x_def) / W + abs(c[1] - y_def) / H))
+    return best[0], best[1], tumpang(a, b, kot(*best))
+
+def anim(an, x, y, h, w=0):
+    """tag animasi masuk (halus, tidak berlebihan)"""
+    if an == 'slam':
+        return f"\\an5\\pos({x},{y})\\fscx135\\fscy135\\blur6\\alpha&HFF&\\t(0,140,0.6,\\fscx100\\fscy100\\blur0\\alpha&H00&)\\fad(0,140)"
+    if an == 'tulis':
+        return f"\\an5\\pos({x},{y})\\frz-3\\fad(150,200)\\clip({int(x - w / 2)},0,{int(x - w / 2)},{H})\\t(0,520,0.7,\\clip(0,0,{W},{H}))"
+    if an == 'kartu':
+        return f"\\an5\\move({x},{y + 22},{x},{y},0,300)\\fscx94\\fscy94\\alpha&HFF&\\t(0,300,0.45,\\fscx100\\fscy100\\alpha&H00&)\\fad(0,180)"
+    if an == 'garis':  # teks naik dari balik garis tipis
+        gy = int(y + h / 2 + 6)
+        return f"\\an5\\move({x},{int(y + h)},{x},{y},120,560)\\clip(0,0,{W},{gy})\\fad(0,250)"
+    # 'naik' (bawaan): naik pelan + memudar masuk, kabur -> tajam
+    return f"\\an5\\move({x},{y + 26},{x},{y},0,320)\\blur5\\alpha&HFF&\\t(0,320,0.5,\\blur0\\alpha&H00&)\\fad(0,160)"
+
+def per_kata(tx, d0=0, step=70):
+    """munculkan kata satu per satu (memudar + tajam)"""
+    out = []; parts = tx.split('\\N')
+    i = 0
+    for pi, p in enumerate(parts):
+        ws = []
+        for w in p.split(' '):
+            if not w: continue
+            t0 = d0 + i * step; i += 1
+            ws.append(f"{{\\alpha&HFF&\\blur4\\t({t0},{t0 + 260},0.6,\\alpha&H00&\\blur0)}}{w}")
+        out.append(' '.join(ws))
+    return '\\N'.join(out)
+
 def make_ass(tl, G, spec, out):
     sb = G['sub']; k = G['kunci']
     bold = -1 if sb['bold'] else 0
@@ -490,6 +580,7 @@ Style: Sub,{G['font']},{FS(sb['size'])},{sb['warna']},&H000000FF,&H00101010,{'&H
 Style: Kunci,{k['font']},{FS(k['size'])},{k['warna']},&H000000FF,&H00101010,&H64000000,-1,0,0,0,100,100,0,0,1,{k['outline']},{3 if k['outline']==0 else 0},5,60,60,0,1
 Style: Kartu,{k['font']},{FS(int(k['size']*0.9))},&H00FFFFFF,&H000000FF,&H00256E2C,&H00256E2C,-1,0,0,0,100,100,0,0,3,30,0,5,60,60,0,1
 Style: Kecil,{G['font']},{FS(G.get('kecil', 54))},&H00FFFFFF,&H000000FF,&H00101010,&H64000000,-1,0,0,0,100,100,0,0,1,{G.get('kecil_outline', 4)},0,5,60,60,0,1
+Style: Garis,{G['font']},20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1
 Style: LT1,{G.get('font_judul', G['font'])},50,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
 Style: LT2,{G['font']},34,&H00E6F0EA,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
 Style: Kotak,{G['font']},20,&H002C6E25,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1
@@ -497,54 +588,88 @@ Style: Kotak,{G['font']},20,&H002C6E25,&H000000FF,&H00000000,&H00000000,0,0,0,0,
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
-    ev = []
-    # subtitle per potongan kata
+    ev = []; laporan = []
+    pen = [t for t in tl.texts if t['kind'] == 'penutup']; t_pen = pen[0]['t0'] if pen else 1e9
+    # batas aman: tulisan besar tidak masuk area tombol/caption TikTok-IG (potrait) dan area subtitle
+    if LAND:
+        bt = (40, int(H * 0.80)); ys = [int(H * f) for f in (0.17, 0.30, 0.50, 0.66)]; xs_side = True
+    else:
+        bt = (150, 1330); ys = [300, 460, 640, 820, 1000, 1180]; xs_side = False
+    # ---- subtitle per potongan kata
     ws = tl.words; per = sb['kata_per']; chunks = []; cur = []
     for w in ws:
+        if w['t0'] >= t_pen - 0.05: continue
         cur.append(w)
         end_sent = re.search(r'[.,!?]$', w['w'])
         if len(cur) >= per or end_sent: chunks.append(cur); cur = []
     if cur: chunks.append(cur)
+    redup = '&H00D2D2D2'
     for ci, c in enumerate(chunks):
         t0 = c[0]['t0']; t1 = c[-1]['t1']
         if ci + 1 < len(chunks): t1 = min(max(t1, t0 + 0.35), chunks[ci+1][0]['t0'])
-        # jangan tampil di atas kartu penutup
+        t1 = min(t1, t_pen)
         txts = []
-        for wi, w in enumerate(c):
+        for w in c:
             word = w['w'].strip()
             word = re.sub(r'[,.]$', '', word) if per <= 3 else word
             if sb['upper']: word = word.upper()
             txts.append((w['t0'], w['t1'], esc(word)))
-        y = int(H * 0.88) if LAND else sb['y']
-        if sb['sorot'] != sb['warna']:
-            # sorot kata yang sedang diucapkan: satu event per kata aktif
-            for wi, (a, b, _) in enumerate(txts):
-                b2 = txts[wi+1][0] if wi + 1 < len(txts) else t1
-                line = ' '.join((('{\\c' + sb['sorot'] + '&\\fscx108\\fscy108}' + tx + '{\\c' + sb['warna'] + '&\\fscx100\\fscy100}') if j == wi else tx) for j, (_, _, tx) in enumerate(txts))
-                pop = '{\\fad(60,0)}' if wi == 0 else ''
-                ev.append(f"Dialogue: 2,{ass_time(a if wi else t0)},{ass_time(b2)},Sub,,0,0,0,,{{\\an2\\pos({W//2},{y})}}{pop}{line}")
-        else:
-            ev.append(f"Dialogue: 2,{ass_time(t0)},{ass_time(t1)},Sub,,0,0,0,,{{\\an2\\pos({W//2},{y})\\fad(120,80)}}{' '.join(t for _, _, t in txts)}")
+        full = ' '.join(t for _, _, t in txts)
+        sw_, sh_ = ukur(full, FS(sb['size']), G['font']); baris = max(1, math.ceil(sw_ / (W - 160)))
+        sw_ = min(sw_, W - 160); sh_ = baris * FS(sb['size']) * 1.25
+        y_def = int(H * 0.88) if LAND else sb['y']
+        alt = [int(H * 0.22)] if LAND else [400]
+        cands = [y_def] + alt; skor = []
+        for yy in cands:
+            skor.append(tumpang(t0, t1, (W/2 - sw_/2 - 16, yy - sh_ - 12, W/2 + sw_/2 + 16, yy + 12)))
+        y = y_def if skor[0] <= 0.12 else cands[int(np.argmin(skor))]
+        if y != y_def: laporan.append(f'sub {t0:.1f}s pindah ke y={y}')
+        aktif = sb['sorot'] if sb['sorot'] != sb['warna'] else sb['warna']
+        dim = sb['warna'] if sb['sorot'] != sb['warna'] else redup
+        for wi, (a, b, _) in enumerate(txts):  # kata yang sedang diucapkan sedikit lebih terang
+            b2 = txts[wi+1][0] if wi + 1 < len(txts) else t1
+            a2 = t0 if wi == 0 else a
+            if b2 <= a2: continue
+            line = ' '.join((('{\\c' + aktif + '&}' + tx + '{\\c' + dim + '&}') if j == wi else tx) for j, (_, _, tx) in enumerate(txts))
+            masuk = f"\\move({W//2},{y + 12},{W//2},{y},0,160)\\fad(110,0)" if wi == 0 else f"\\pos({W//2},{y})"
+            ev.append(f"Dialogue: 2,{ass_time(a2)},{ass_time(b2)},Sub,,0,0,0,,{{\\an2{masuk}\\c{dim}&}}{line}")
+    # ---- teks besar, judul, lower third
     for t in tl.texts:
-        a, b = t['t0'], t['t1']; tx = esc(t['teks']); y = Y(t.get('y') or k['y'])
-        if t['kind'] == 'kunci':
-            an = k['anim']
-            if an == 'pop':
-                fx = f"{{\\an5\\pos({W//2},{y})\\fscx40\\fscy40\\t(0,140,\\fscx112\\fscy112)\\t(140,240,\\fscx100\\fscy100)\\fad(0,150)}}"
-            elif an == 'slam':
-                fx = f"{{\\an5\\pos({W//2},{y})\\fscx180\\fscy180\\alpha&HFF&\\t(0,110,\\fscx100\\fscy100\\alpha&H00&)\\fad(0,120)}}"
-            elif an == 'tulis':
-                fx = f"{{\\an5\\pos({W//2},{y})\\frz-4\\fad(200,200)\\clip(0,0,0,{H})\\t(0,500,\\clip(0,0,{W},{H}))}}"
-            elif an == 'kartu':
-                fx = f"{{\\an5\\pos({W//2},{y})\\fscx70\\fscy70\\alpha&HFF&\\t(0,260,0.45,\\fscx100\\fscy100\\alpha&H00&)\\fad(0,180)}}"
-            else:
-                fx = f"{{\\an5\\pos({W//2},{y})\\fad(400,400)}}"
-            st = 'Kartu' if an == 'kartu' else 'Kunci'
-            ev.append(f"Dialogue: 5,{ass_time(a)},{ass_time(b)},{st},,0,0,0,,{fx}{tx}")
+        a, b = t['t0'], t['t1']; tx = esc(t['teks']); y0 = Y(t.get('y') or k['y'])
+        if t['kind'] in ('kunci', 'judul'):
+            an = k['anim'] if t['kind'] == 'kunci' else ('garis' if k['anim'] in ('fade', 'garis') else 'naik')
+            if an in ('pop', 'fade'): an = 'naik' if an == 'pop' else 'garis'
+            st = 'Kartu' if (an == 'kartu' and t['kind'] == 'kunci') else 'Kunci'
+            size = FS(int(k['size'] * (0.9 if st == 'Kartu' else 1)))
+            w_, h_ = ukur(tx, size, k['font'])
+            if st == 'Kartu': w_ += 60; h_ += 60
+            off2 = FS(int(k['size'] * (1.15 if an == 'kartu' else 0.85))) if t.get('sub2') else 0
+            h_tot = h_ + (off2 + FS(G.get('kecil', 54)) * 0.6 if off2 else 0)
+            w_tot = max(w_, ukur(esc(t.get('sub2') or ''), FS(G.get('kecil', 54)), G['font'])[0])
+            xs = [W // 2, int(W * 0.27), int(W * 0.73)] if (xs_side and w_tot < W * 0.42) else None
+            # titik acuan = tengah blok (judul + keterangan)
+            cy_def = int(y0 + (h_tot - h_) / 2)
+            x, cy, sisa = pilih(a, b, w_tot, h_tot, W // 2, cy_def, [v + int((h_tot - h_) / 2) for v in ys], xs, bt)
+            y = int(cy - (h_tot - h_) / 2)
+            if (x, cy) != (W // 2, cy_def): laporan.append(f"{t['kind']} '{t['teks'][:18]}' {a:.1f}s pindah ke ({x},{y}) sisa={sisa:.2f}")
+            body = per_kata(tx, 60) if an == 'naik' else tx
+            lay = 5 if t['kind'] == 'kunci' else 6
+            ev.append(f"Dialogue: {lay},{ass_time(a)},{ass_time(b)},{st},,0,0,0,,{{{anim(an, x, y, h_, w_)}}}{body}")
+            if an == 'garis':  # garis tipis yang memanjang dari tengah
+                gw = int(min(w_, W * 0.5)); gy = int(y + h_ / 2 + 6)
+                ev.append(f"Dialogue: {lay},{ass_time(a)},{ass_time(b)},Garis,,0,0,0,,{{\\an5\\pos({x},{gy})\\fscx0\\t(0,380,0.4,\\fscx100)\\fad(0,250)\\p1}}m 0 0 l {gw} 0 {gw} 3 0 3")
             if t.get('sub2'):
-                ev.append(f"Dialogue: 5,{ass_time(a+0.15)},{ass_time(b)},Kecil,,0,0,0,,{{\\an5\\pos({W//2},{y + FS(int(k['size']*(1.15 if k['anim']=='kartu' else 0.8)))})\\fad(200,150)}}{esc(t['sub2'])}")
+                y2 = y + off2
+                ev.append(f"Dialogue: {lay},{ass_time(a+0.18)},{ass_time(b)},Kecil,,0,0,0,,{{\\an5\\move({x},{y2 + 12},{x},{y2},0,260)\\fad(200,150)}}{esc(t['sub2'])}")
         elif t['kind'] == 'lower':  # lower third beranimasi (geser masuk dengan ease-out, aksen kuning)
-            x0, yb = (110 if LAND else 64), (int(H*0.63) if LAND else (t.get('y') or 1190)); wbar = t.get('w', 640)
+            wbar = t.get('w', 640)
+            if LAND:
+                opsi = [(110, int(H*0.63)), (W - 110 - wbar, int(H*0.63)), (110, int(H*0.12))]
+            else:
+                opsi = [(64, t.get('y') or 1190), (64, 300)]
+            sk = [tumpang(a, b, (x0 - 20, yb - 20, x0 + wbar + 20, yb + 138)) for x0, yb in opsi]
+            x0, yb = opsi[0] if sk[0] <= 0.02 else opsi[int(np.argmin(sk))]
+            if (x0, yb) != opsi[0]: laporan.append(f'lower third {a:.1f}s pindah ke ({x0},{yb})')
             box = f"m 0 0 l {wbar} 0 {wbar} 118 0 118"
             acc = "m 0 0 l 10 0 10 118 0 118"
             ev.append(f"Dialogue: 7,{ass_time(a)},{ass_time(b)},Kotak,,0,0,0,,{{\\an7\\pos({x0},{yb})\\1c&H2C6E25&\\1a&H18&\\clip(0,0,{x0},{H})\\t(0,380,0.4,\\clip(0,0,{x0+wbar},{H}))\\fad(0,200)\\p1}}{box}")
@@ -552,11 +677,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             l1, _, l2 = t['teks'].partition('|')
             ev.append(f"Dialogue: 9,{ass_time(a+0.18)},{ass_time(b)},LT1,,0,0,0,,{{\\an7\\move({x0+10},{yb+14},{x0+30},{yb+14},0,320)\\alpha&HFF&\\t(0,300,0.5,\\alpha&H00&)\\fad(0,200)}}{esc(l1.strip())}")
             if l2: ev.append(f"Dialogue: 9,{ass_time(a+0.3)},{ass_time(b)},LT2,,0,0,0,,{{\\an7\\move({x0+10},{yb+70},{x0+30},{yb+70},0,320)\\alpha&HFF&\\t(0,300,0.5,\\alpha&H00&)\\fad(0,200)}}{esc(l2.strip())}")
-        elif t['kind'] == 'judul':
-            ev.append(f"Dialogue: 6,{ass_time(a)},{ass_time(b)},Kunci,,0,0,0,,{{\\an5\\pos({W//2},{y})\\fscx60\\fscy60\\t(0,200,\\fscx100\\fscy100)\\fad(0,200)}}{tx}")
-            if t.get('sub2'):
-                ev.append(f"Dialogue: 6,{ass_time(a+0.2)},{ass_time(b)},Kecil,,0,0,0,,{{\\an5\\pos({W//2},{y + FS(int(k['size']*0.85))})\\fad(200,200)}}{esc(t['sub2'])}")
     open(out, 'w').write(head + '\n'.join(ev) + '\n')
+    return laporan
 
 # ---------------------------------------------------------------- kartu penutup (HTML -> PNG)
 def penutup_png(G, spec, out):
@@ -598,14 +720,23 @@ def main():
         W, H, LAND = 1920, 1080, True
         spec['id'] = spec['id'] + 'L'; spec['file'] = spec.get('file', spec['id']) + '-Landscape'
     tl, G = build(spec)
-    os.makedirs(f'{E}/out', exist_ok=True); wd = f"{CACHE}/{spec['id']}"; os.makedirs(wd, exist_ok=True)
+    os.makedirs(OUT, exist_ok=True); wd = f"{CACHE}/{spec['id']}"; os.makedirs(wd, exist_ok=True)
     print(f"[{spec['id']}] gaya={spec['gaya']} durasi={tl.t:.1f}s shot={len(tl.shots)} kata={len(tl.words)}", flush=True)
     json.dump(dict(shots=tl.shots, voice=tl.voice, words=tl.words, texts=tl.texts, bounds=tl.bounds, dur=tl.t), open(f'{wd}/timeline.json', 'w'), indent=1)
     if '--timeline' in sys.argv: return
-    make_ass(tl, G, spec, f'{wd}/teks.ass')
-    info = mix_audio(tl, G, spec, f'{wd}/mix.wav'); print('  audio', info, flush=True)
-    assemble(tl, G, f'{wd}/video.mp4'); print('  video ok', flush=True)
-    out = f"{E}/out/{spec.get('file', spec['id'])}.mp4"
+    cepat = '--ulang-teks' in sys.argv and os.path.exists(f'{wd}/video.mp4') and os.path.exists(f'{wd}/mix.wav')
+    if not cepat:
+        info = mix_audio(tl, G, spec, f'{wd}/mix.wav'); print('  audio', info, flush=True)
+        assemble(tl, G, f'{wd}/video.mp4'); print('  video ok', flush=True)
+    global PETA, VIDEO_POLOS
+    from wajahtl import peta_wajah
+    VIDEO_POLOS = f'{wd}/video.mp4'
+    if cepat and os.path.exists(f'{wd}/wajah.json'): PETA = json.load(open(f'{wd}/wajah.json'))
+    else:
+        PETA = peta_wajah(f'{wd}/video.mp4', W, H); json.dump(PETA, open(f'{wd}/wajah.json', 'w'))
+    lap = make_ass(tl, G, spec, f'{wd}/teks.ass')
+    print('  teks', '; '.join(lap) if lap else 'semua posisi aman', flush=True)
+    out = f"{OUT}/{spec.get('file', spec['id'])}.mp4"
     final(tl, G, spec, f'{wd}/video.mp4', f'{wd}/mix.wav', f'{wd}/teks.ass', out)
     print('  SELESAI', out, f'{tl.t:.1f}s', flush=True)
 
