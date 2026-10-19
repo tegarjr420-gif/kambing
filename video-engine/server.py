@@ -67,6 +67,25 @@ class H(BaseHTTPRequestHandler):
             if os.path.exists(f'{d}/naskah.json'): os.rename(f'{d}/naskah.json', f'{d}/naskah_lama_{int(time.time())}.json')
             json.dump(dict(video=specs, catatan='naskah contoh (uji render)', sumber='manual'), open(f'{d}/naskah.json', 'w'), ensure_ascii=False)
             return s.kirim(200, dict(ok=True, hasil=pipeline.ulang(jid, 'render')))
+        if u.path == '/arsip':  # pindahkan file dari Supabase Storage (…/arsip/) ke folder Drive lewat jembatan
+            import jembatan, requests as rq
+            folder = q.get('folder', [''])[0]; berkas = [b for b in q.get('berkas', [''])[0].split(',') if b]
+            base = os.environ.get('QC_STORAGE_URL', '').replace('/object/', '/object/authenticated/').rsplit('/qc', 1)[0] + '/arsip/'
+            key = os.environ.get('QC_STORAGE_KEY', '')
+            def kerja():
+                for b in berkas:
+                    try:
+                        p = f'{pipeline.DATA}/arsip_{os.path.basename(b)}'
+                        with rq.get(base + b, headers={'apikey': key, 'Authorization': f'Bearer {key}'}, stream=True, timeout=600) as r:
+                            r.raise_for_status()
+                            with open(p, 'wb') as f:
+                                for ch in r.iter_content(8 << 20): f.write(ch)
+                        hasil = jembatan.unggah(p, folder, os.path.basename(b)); os.remove(p)
+                        TERAKHIR.setdefault('arsip', {})[b] = hasil['url']; print('arsip ok', b, flush=True)
+                    except Exception as e:
+                        TERAKHIR.setdefault('arsip', {})[b] = 'GAGAL: ' + str(e)[:200]; print('arsip gagal', b, e, flush=True)
+            threading.Thread(target=kerja, daemon=True).start()
+            return s.kirim(200, dict(ok=True, mulai=len(berkas)))
         if u.path == '/proses':
             import subprocess
             return s.kirim(200, dict(ps=subprocess.run(['ps', '-eo', 'pid,ppid,etime,pcpu,rss,args', '--sort=-pcpu'], capture_output=True, text=True).stdout[:6000],
