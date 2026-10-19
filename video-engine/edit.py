@@ -163,8 +163,8 @@ def rapikan_batas(ws, a0, a1, dur):
             s = i  # awal kalimat terlalu jauh: biarkan, tapi jangan memotong kata
         while s < len(ws) - 1 and ABA_.match(ws[s]['w'].strip()): s += 1  # lewati hitungan aba-aba "1, 2, 3"
         prev = ws[s - 1]['t1'] if s > 0 else 0.0
-        a0 = max(min(a0, ws[s]['t0'] - 0.1), prev + 0.03, 0.0)
-        if s > 0 and ABA_.match(ws[s - 1]['w'].strip()): a0 = max(a0, (ws[s - 1]['t1'] + ws[s]['t0']) / 2)
+        # mulai sedikit sebelum kata pertama; jangan masuk ke kata sebelumnya, tapi juga jangan sampai memotong awal kata pertama
+        a0 = max(min(a0, ws[s]['t0'] - 0.1), min(prev + 0.03, ws[s]['t0'] - 0.08), 0.0)
     return round(a0, 3), round(a1, 3)
 
 def jeda_terdekat(ws, t, arah):
