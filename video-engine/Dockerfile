@@ -3,8 +3,10 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1 TZ=Asia/Jakarta \
     MODELS=/models SF2=/models/GeneralUser-GS.sf2 DATA=/data PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ffmpeg python3 python3-pip curl ca-certificates bzip2 tzdata nodejs npm \
-    && rm -rf /var/lib/apt/lists/*
+      ffmpeg python3 python3-pip curl ca-certificates bzip2 xz-utils tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSL https://nodejs.org/dist/v22.22.0/node-v22.22.0-linux-x64.tar.xz | tar xJ -C /usr/local --strip-components=1 \
+    && node -v
 WORKDIR /app
 COPY requirements.txt .
 RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt \
