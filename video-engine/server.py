@@ -37,6 +37,7 @@ class H(BaseHTTPRequestHandler):
     def log_message(s, *a): pass
     def do_GET(s):
         u = urllib.parse.urlparse(s.path); q = urllib.parse.parse_qs(u.query)
+        if u.path in ('/cek', '/uji-ai', '/uji-wa', '/uji-drive'): return s.do_POST()
         if u.path in ('/', '/sehat'):
             return s.kirim(200, dict(ok=True, versi=VERSI, sibuk=pipeline.SEKARANG['tugas'], cek_terakhir=TERAKHIR))
         if not s.boleh(q): return s.kirim(403, dict(ok=False, galat='kunci'))
@@ -64,7 +65,7 @@ class H(BaseHTTPRequestHandler):
         if not s.boleh(q): return s.kirim(403, dict(ok=False, galat='kunci'))
         if u.path == '/cek':
             tn = q.get('tenang', [None])[0]
-            r = pipeline.cek(tenang_menit=float(tn) if tn is not None else None); TERAKHIR['hasil'] = r
+            r = pipeline.cek(tenang_menit=float(tn) if tn is not None else None, uji=q.get('uji', ['0'])[0] == '1'); TERAKHIR['hasil'] = r
             return s.kirim(200, dict(ok=True, hasil=r))
         if u.path == '/uji-ai':  # tes koneksi Gemini lewat n8n
             import sutradara

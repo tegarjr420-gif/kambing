@@ -168,16 +168,18 @@ def t_unggah(T, hasil):
 
 def judul_dari(file): return re.sub(r'^BarokahFarm-\d+-\d+-', '', os.path.basename(file)[:-4]).replace('-', ' ')
 
-def jalankan(files, jid=None):
+def jalankan(files, jid=None, uji=False):
     if not KUNCI.acquire(blocking=False): return None
     T = Tugas(jid); SEKARANG['tugas'] = T.id
+    if uji: T.st['uji'] = True; T.simpan()
+    awal = '🧪 *UJI COBA MESIN* (mentahan lama, abaikan bila bukan Anda)\n' if T.st.get('uji') else ''
     try:
         baru = not T.st['file']
         t_unduh(T, files)
         if not T.st['file']: T.log('tidak ada mentahan yang bisa dipakai'); T.tahap('gagal'); return T
         if baru:
             menit = 20 + 6 * len(T.st['file'])
-            lapor_wa(f"🎬 *Mentahan diterima*: {len(T.st['file'])} video. Mesin sedang mengedit, perkiraan selesai ±{menit} menit. Hasilnya nanti dikirim ke sini.", T.log)
+            lapor_wa(awal + f"🎬 *Mentahan diterima*: {len(T.st['file'])} video. Mesin sedang mengedit, perkiraan selesai ±{menit} menit. Hasilnya nanti dikirim ke sini.", T.log)
         t_hapus_drive(T)
         K = t_analisa(T)
         specs, catatan, sumber = t_sutradara(T, K)
@@ -195,7 +197,7 @@ def jalankan(files, jid=None):
             if v['masalah']: b += f"\n   ⚠️ {', '.join(v['masalah'])}"
             baris.append(b)
         dihapus = sum(1 for f in T.st['file'].values() if f.get('dihapus'))
-        teks = (f"✅ *{len(hasil)} video Barokah Farm siap dicek*\n\n" + '\n'.join(baris) +
+        teks = awal + (f"✅ *{len(hasil)} video Barokah Farm siap dicek*\n\n" + '\n'.join(baris) +
                 (f"\n\n📁 Semua video: {fj['url']}" if fj else '') +
                 (f"\n\n🗑️ {dihapus} mentahan sudah dihapus dari Drive." if dihapus else '') +
                 "\n📥 Silakan kirim *mentahan baru* ke folder *1. Video Mentah* di Drive (rekam potrait, stabil, suara dekat).")
@@ -226,7 +228,7 @@ def belum_tuntas():
         except Exception: pass
     return None, None
 
-def cek(log=print, tenang_menit=None):
+def cek(log=print, tenang_menit=None, uji=False):
     """dipanggil berkala: lanjutkan tugas yang terputus, atau mulai tugas baru bila ada mentahan yang sudah selesai diunggah"""
     if KUNCI.locked(): return 'sibuk'
     jid, st = belum_tuntas()
@@ -241,5 +243,5 @@ def cek(log=print, tenang_menit=None):
     if tbaru and tenang > 0:
         umur = (datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromisoformat(max(tbaru).replace('Z', '+00:00'))).total_seconds() / 60
         if umur < tenang: return f'menunggu unggahan selesai ({umur:.0f}/{tenang:.0f} menit)'
-    threading.Thread(target=jalankan, args=(files,), daemon=True).start()
+    threading.Thread(target=jalankan, args=(files, None, uji), daemon=True).start()
     return f'mulai {len(files)} file'
