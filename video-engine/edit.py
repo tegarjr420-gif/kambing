@@ -443,6 +443,14 @@ def lufs(path):
     m = re.findall(r'I:\s+(-?[\d.]+) LUFS', o)
     return float(m[-1]) if m else -70.0
 
+def rata(x, k):
+    """rata-rata bergerak (sama seperti np.convolve(x, ones(k)/k, 'same')) tapi O(n) lewat cumsum"""
+    x = np.asarray(x, np.float64); n = len(x); k = max(1, int(k))
+    c = np.concatenate([[0.0], np.cumsum(x)])
+    i = np.arange(n); a = np.clip(i - k // 2 + (1 if k % 2 == 0 else 0), 0, n); b = np.clip(a + k, 0, n)
+    a = np.clip(i - (k - 1) // 2, 0, n); b = np.clip(i + k // 2 + 1, 0, n)
+    return (c[b] - c[a]) / k
+
 def mix_audio(tl, G, spec, out):
     n = int((tl.t + 0.05) * SR)
     V = np.zeros((n, 2), np.float32); A = np.zeros((n, 2), np.float32); X = np.zeros((n, 2), np.float32)
@@ -471,10 +479,10 @@ def mix_audio(tl, G, spec, out):
     # level musik ke target LUFS (ukur cepat via RMS berbobot sederhana -> pakai ffmpeg di file)
     ml = lufs(mfile); M *= 10 ** ((G['musik_db'] + mz.get('db', 0) - ml) / 20)
     # ducking dari amplop suara
-    env = np.sqrt(np.convolve((V**2).mean(1), np.ones(int(0.05*SR))/int(0.05*SR), 'same'))
+    env = np.sqrt(rata((V**2).mean(1), int(0.05*SR)))
     act = (env > 10 ** (-38/20)).astype(np.float32)
     # tahan 250 ms, attack 80 ms, release 400 ms
-    hold = int(0.25*SR); act = np.convolve(act, np.ones(hold), 'same') > 0
+    hold = int(0.25*SR); act = rata(act, hold) > 0
     g = np.where(act, 10 ** (G['duck_db'] / 20), 1.0).astype(np.float32)
     a_, r_ = 1 - math.exp(-1/(0.08*SR)), 1 - math.exp(-1/(0.4*SR))
     sm = np.empty_like(g); s0 = 1.0
@@ -482,10 +490,10 @@ def mix_audio(tl, G, spec, out):
         tgt = g[i]; c = a_ if tgt < s0 else r_; s0 += (tgt - s0) * (1 - (1-c)**64); sm[i:i+64] = s0
     M *= sm[:, None]
     # pastikan musik selalu di bawah suara asli (suara orang & suara kandang)
-    asli = np.sqrt(np.convolve((V**2).mean(1), np.ones(int(0.4*SR))/int(0.4*SR), 'same'))  # patokan: suara orang
-    mus = np.sqrt(np.convolve((M**2).mean(1), np.ones(int(0.4*SR))/int(0.4*SR), 'same'))
+    asli = np.sqrt(rata((V**2).mean(1), int(0.4*SR)))  # patokan: suara orang
+    mus = np.sqrt(rata((M**2).mean(1), int(0.4*SR)))
     over = np.where((asli > 10 ** (-40/20)) & (mus > asli * 10 ** (-9/20)), (asli * 10 ** (-9/20)) / np.maximum(mus, 1e-6), 1.0)
-    over = np.convolve(over, np.ones(int(0.2*SR))/int(0.2*SR), 'same').astype(np.float32)
+    over = rata(over, int(0.2*SR)).astype(np.float32)
     M *= np.clip(over, 0.25, 1.0)[:, None]
     mix = V + A + X + M
     tmp = out + '.pre.wav'; wavfile.write(tmp, SR, np.clip(mix, -1, 1))
