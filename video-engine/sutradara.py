@@ -89,15 +89,21 @@ Buat sebanyak mungkin video BAGUS dari bahan ini (1–6 video), tiap video punya
 
 def panggil_gemini(teks, gambar, model=None, timeout=600):
     url = os.environ.get('GEMINI_PROXY_URL'); kunci = os.environ.get('GEMINI_PROXY_KEY', '')
-    if not url: raise RuntimeError('GEMINI_PROXY_URL belum diisi')
+    if not url and not os.environ.get('GEMINI_API_KEY'): raise RuntimeError('GEMINI_PROXY_URL / GEMINI_API_KEY belum diisi')
     parts = [{'text': teks}]
     for nama, p in gambar:
         parts.append({'text': f'Contact sheet klip {nama}:'})
         parts.append({'inline_data': {'mime_type': 'image/jpeg', 'data': base64.b64encode(open(p, 'rb').read()).decode()}})
     body = {'contents': [{'role': 'user', 'parts': parts}],
             'generationConfig': {'temperature': 0.6, 'maxOutputTokens': 60000, 'responseMimeType': 'application/json'}}
-    r = requests.post(url, json={'kunci': kunci, 'model': model or os.environ.get('GEMINI_MODEL', 'gemini-3.8-flash'), 'body': body}, timeout=timeout)
-    r.raise_for_status(); j = r.json()
+    mdl = model or os.environ.get('GEMINI_MODEL', 'gemini-3.8-flash')
+    if os.environ.get('GEMINI_API_KEY'):  # langsung ke Gemini (tidak menahan antrean n8n)
+        r = requests.post(f'https://generativelanguage.googleapis.com/v1beta/models/{mdl}:generateContent',
+                          params={'key': os.environ['GEMINI_API_KEY']}, json=body, timeout=timeout)
+    else:  # lewat n8n (kredensial Gemini tersimpan di n8n)
+        r = requests.post(url, json={'kunci': kunci, 'model': mdl, 'body': body}, timeout=timeout)
+    if r.status_code >= 500: r.raise_for_status()
+    j = r.json()
     if isinstance(j, list): j = j[0]
     if j.get('error'): raise RuntimeError('Gemini: ' + json.dumps(j['error'])[:400])
     try:
