@@ -194,7 +194,18 @@ def jalankan(files, jid=None, uji=False):
             lapor_wa(awal + f"🎬 *Mentahan diterima*: {len(T.st['file'])} video. Mesin sedang mengedit, perkiraan selesai ±{menit} menit. Hasilnya nanti dikirim ke sini.", T.log)
         t_hapus_drive(T)
         K = t_analisa(T)
-        specs, catatan, sumber = t_sutradara(T, K)
+        import sutradara
+        try:
+            specs, catatan, sumber = t_sutradara(T, K)
+        except sutradara.TundaAI:
+            T.st['tunda_ke'] = T.st.get('tunda_ke', 0) + 1
+            T.st['tunda_sampai'] = (now() + datetime.timedelta(minutes=30)).isoformat()
+            if T.st['tunda_ke'] == 1:
+                lapor_wa(awal + '⏳ AI pengedit (Gemini) sedang gangguan/sibuk. Mentahan aman tersimpan; editing ditunda dan mesin mencoba lagi otomatis tiap 30 menit.', T.log)
+            if T.st['tunda_ke'] >= 48:
+                lapor_wa(awal + '⚠️ Gemini gangguan lebih dari 24 jam, editing belum bisa dibuat. Cek saldo/billing Gemini di aistudio.google.com.', T.log)
+                T.tahap('gagal'); return T
+            T.tahap('tunggu_ai'); T.log('ditunda: menunggu Gemini, dicoba lagi', T.st['tunda_sampai']); return T
         if not specs: T.tahap('gagal'); lapor_wa('⚠️ Mesin video tidak bisa menyusun video dari mentahan terakhir (bahan kurang/rusak). Mohon kirim mentahan lain.', T.log); return T
         hasil = [cek_video(T, v) for v in t_render(T, specs)]
         T.st['video'] = hasil; T.simpan()
@@ -234,6 +245,9 @@ def belum_tuntas():
     for d in sorted(glob.glob(f'{DATA}/tugas/*')):
         try:
             st = json.load(open(f'{d}/status.json'))
+            if st.get('tahap') == 'tunggu_ai':
+                if now().isoformat() >= st.get('tunda_sampai', ''): return os.path.basename(d), st
+                continue
             if st.get('tahap') not in ('selesai', 'gagal') and st.get('file') and st.get('ulang', 0) < 2:
                 return os.path.basename(d), st
         except Exception: pass
@@ -244,7 +258,8 @@ def cek(log=print, tenang_menit=None, uji=False):
     if KUNCI.locked(): return 'sibuk'
     jid, st = belum_tuntas()
     if jid:
-        st['ulang'] = st.get('ulang', 0) + 1; json.dump(st, open(f'{DATA}/tugas/{jid}/status.json', 'w'))
+        if st.get('tahap') != 'tunggu_ai': st['ulang'] = st.get('ulang', 0) + 1
+        json.dump(st, open(f'{DATA}/tugas/{jid}/status.json', 'w'))
         threading.Thread(target=jalankan, args=([], jid), daemon=True).start(); return f'lanjut {jid}'
     lama = sudah_diproses()
     files = [f for f in jembatan.daftar_mentah() if f['id'] not in lama]

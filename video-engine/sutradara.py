@@ -179,12 +179,14 @@ def periksa(spec, K, no, info):
     spec['_durasi'] = dur
     return spec, []
 
+class TundaAI(Exception): pass
+
 def tulis(K, info, log=print):
     """-> (daftar spec, catatan, sumber)"""
     gambar = [(n, f"{info['ana']}/sheet/{n}.jpg") for n, k in K.items() if k and not k.get('rusak') and os.path.exists(f"{info['ana']}/sheet/{n}.jpg")]
     teks = prompt(K, info)
     masalah_lalu = ''
-    tunggu_maks = float(os.environ.get('AI_TUNGGU_MENIT', '180')) * 60; t_mulai = time.time()
+    tunggu_maks = float(os.environ.get('AI_TUNGGU_MENIT', '30')) * 60; t_mulai = time.time()
     jeda = [60, 120, 240, 480, 900]; gagal_beruntun = 0; ditolak = 0
     while True:
         try:
@@ -215,6 +217,8 @@ def tulis(K, info, log=print):
             d = jeda[min(gagal_beruntun - 1, len(jeda) - 1)]
             log(f'  coba lagi dalam {d // 60} menit (Gemini sibuk/gangguan biasanya sementara)')
             time.sleep(d)
+    if os.environ.get('ATURAN_CADANGAN', '0') != '1':
+        raise TundaAI('Gemini belum bisa dipakai, editing ditunda')
     import aturan
     hasil = []
     for sp in aturan.susun(K, info):
