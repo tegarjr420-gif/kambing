@@ -17,6 +17,7 @@ def Y(y): return int(y * H / 1920)               # posisi vertikal dirancang unt
 def FS(z): return int(z * (0.85 if LAND else 1))  # ukuran huruf
 CACHE = os.environ.get('CACHE', f'{E}/cache'); os.makedirs(CACHE, exist_ok=True)
 OUT = os.environ.get('OUT', f'{E}/out')
+TH = os.environ.get('FF_THREADS', '2')
 VF_VERSI = 3  # naikkan bila filter video berubah agar cache shot dibuat ulang
 FONTS = f'{E}/fonts'
 
@@ -346,7 +347,7 @@ def render_shot(i, s, G, handle, key):
         vf = vf_shot(s, G, dur, m, trf)
         sh(['ffmpeg', '-nostdin', '-y', '-loglevel', 'error', '-ss', f'{a:.3f}', '-t', f'{need + 0.2:.3f}', '-i', m['path'], '-an',
             '-filter_complex', f'[0:v]{vf}[v]', '-map', '[v]', '-t', f'{dur:.3f}', '-r', str(FPS),
-            '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '16', '-threads', '2', out + '.tmp.mp4'])
+            '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '16', '-threads', TH, out + '.tmp.mp4'])
         os.rename(out + '.tmp.mp4', out)
     return out
 
@@ -386,7 +387,7 @@ def assemble(tl, G, out):
         fc.append(f"{cur}[ov{k}]overlay=eof_action=pass:enable='between(t,{s['start']:.3f},{s['start']+s['dur']:.3f})'{o}")
         cur = o
     fc.append(f'{cur}trim=0:{tl.t:.4f},setpts=PTS-STARTPTS,format=yuv420p[vout]')
-    args += ['-filter_complex', ';'.join(fc), '-map', '[vout]', '-r', str(FPS), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '16', '-threads', '2', out]
+    args += ['-filter_complex', ';'.join(fc), '-map', '[vout]', '-r', str(FPS), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '16', '-threads', TH, out]
     sh(args)
 
 # ---------------------------------------------------------------- audio
@@ -709,7 +710,7 @@ def final(tl, G, spec, vid, aud, ass, out):
         fc.append(f"{cur}[pn]overlay=0:0:enable='gte(t,{pt0:.2f})'[v3]"); cur = '[v3]'
     fc.append(f"{cur}fade=t=out:st={tl.t-0.35:.2f}:d=0.35,format=yuv420p[vo]")
     args += ['-filter_complex', ';'.join(fc), '-map', '[vo]', '-map', '1:a', '-t', f'{tl.t:.3f}',
-             '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-maxrate', '10M', '-bufsize', '20M', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-r', str(FPS), '-threads', '2',
+             '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-maxrate', '10M', '-bufsize', '20M', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-r', str(FPS), '-threads', TH,
              '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', out]
     sh(args)
 

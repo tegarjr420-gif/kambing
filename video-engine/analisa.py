@@ -96,10 +96,10 @@ def transkrip(wav):
     return segs
 
 # ------------------------------------------------------------------ gambar
-def frames(p, fps, lebar):
+def frames(p, fps, lebar, durasi=None):
     m = probe(p); w = lebar if m['w'] >= m['h'] else int(lebar * m['w'] / m['h']) // 2 * 2
     h = int(round(w * m['h'] / m['w'])) // 2 * 2
-    raw = run(['ffmpeg', '-nostdin', '-loglevel', 'error', '-i', p, '-vf', f'fps={fps},scale={w}:{h}', '-f', 'rawvideo', '-pix_fmt', 'bgr24', '-'])
+    raw = run(['ffmpeg', '-nostdin', '-loglevel', 'error'] + (['-t', str(durasi)] if durasi else []) + ['-i', p, '-vf', f'fps={fps},scale={w}:{h}', '-f', 'rawvideo', '-pix_fmt', 'bgr24', '-'])
     n = len(raw) // (w * h * 3)
     return [np.frombuffer(raw, np.uint8, w * h * 3, i * w * h * 3).reshape(h, w, 3) for i in range(n)], w, h
 
@@ -161,7 +161,7 @@ def analisa_klip(p, ana, nama):
     gray = [cv2.cvtColor(f, cv2.COLOR_BGR2GRAY) for f in fr]
     info['terang'] = round(float(np.mean([g.mean() for g in gray])) / 255, 2)
     info['tajam'] = round(float(np.median([cv2.Laplacian(g, cv2.CV_64F).var() for g in gray])), 1)
-    fr10, _, _ = frames(p, 10, 320)
+    fr10, _, _ = frames(p, 10, 320, durasi=12)
     info['goyang'] = round(goyang(fr10[:120]), 2)
     # contact sheet: maks 24 gambar
     step = max(0.5, m['dur'] / 24); ts = [i * step for i in range(int(m['dur'] / step) + 1) if i * step < m['dur'] - 0.1][:24]
