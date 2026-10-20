@@ -217,7 +217,7 @@ def hapus_qc(T):
     except Exception as e:
         T.log(f'hapus salinan QC gagal: {e}')
 
-def judul_dari(file): return re.sub(r'^BarokahFarm-\d+-\d+-', '', os.path.basename(file)[:-4]).replace('-', ' ')
+def judul_dari(file): return re.sub(r'^BarokahFarm-[\d-]+?-\d{2}-', '', os.path.basename(file)[:-4]).replace('-', ' ')
 
 def jalankan(files, jid=None, uji=False):
     if not KUNCI.acquire(blocking=False): return None
