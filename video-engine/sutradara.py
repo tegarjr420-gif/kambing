@@ -1,6 +1,6 @@
 # Sutradara: menulis naskah edit (spec JSON) dari hasil analisa.
 # Utama: Gemini (lewat proxy n8n, kredensial Gemini tersimpan di n8n). Cadangan: aturan tetap (aturan.py) bila AI gagal.
-import os, json, re, base64, subprocess, sys, time, random
+import os, json, re, base64, subprocess, sys, time, random, datetime
 import requests
 
 E = os.path.dirname(os.path.abspath(__file__))
@@ -75,6 +75,8 @@ Musik (dibuat mesin, aman hak cipta): {', '.join(MUSIK)}. Transisi: {', '.join(T
 - Momen sumber BOLEH dipakai ulang di video lain (maksimal 2 video per momen), asal tiap video tampil berbeda: hook pembuka, urutan, potongan, gaya, teks, dan sudut cerita berbeda. Jangan ada dua video yang terasa sama.
 - Abaikan hitungan aba-aba (\"1, 2, 3\", \"oke\", \"action\") dan bagian sebelum orang mulai bicara; 'in' dimulai tepat sebelum kata pertama kalimat.
 - Teks layar singkat (≤ 4 kata per baris), bahasa Indonesia santai, tidak alay, tanpa emoji.
+- Teks layar TIDAK BOLEH memuat harga, DP, nomor WA/rekening, alamat web, atau kata jual/beli/harga/DP/transfer/termurah/terbaik (aturan TikTok & Meta).
+- Kalimat ucapan yang menyebut harga, nominal, nomor WA, atau klaim superlatif ("termurah", "terbaik", "paling") sebaiknya tidak dipakai bila ada kalimat lain yang setara; bila tetap dipakai, buang bagian klaimnya dengan "buang" kalau bisa dipotong rapi.
 - "file": "BarokahFarm-{info['tanggal']}-<no>-<Judul-Singkat>" tanpa spasi. "id": "A1", "A2", dst.
 - Keluaran video POTRAIT 1080x1920 untuk TikTok, Instagram, dan Facebook.
 
@@ -85,15 +87,19 @@ Musik (dibuat mesin, aman hak cipta): {', '.join(MUSIK)}. Transisi: {', '.join(T
 {inventaris(K)}
 
 ## Yang harus kamu keluarkan
+Tanggal hari ini: {datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7))).strftime('%d %B %Y')} (Iduladha 1448 H diperkirakan sekitar pertengahan Mei 2027; aqiqah sepanjang tahun).
 JSON saja: {{"video": [<naskah 1>, <naskah 2>, ...], "catatan": "<ringkasan pilihan editing, klip yang tidak dipakai beserta alasannya, risiko>"}}
 MAKSIMALKAN bahan: video ini dipakai untuk autopost berkala, jadi buat sebanyak mungkin video yang layak posting.
 Target sekitar {target_video(K)} video (boleh sedikit lebih atau kurang sesuai kualitas bahan, maksimal 12). Tiap video punya tujuan/sudut berbeda
 (promo, edukasi, kenalan, suasana kandang, reseller, aqiqah, qurban, tips memilih hewan, dll.). Kualitas tetap nomor satu: jangan isi video dengan klip jelek.
 
 Tiap naskah video WAJIB punya 3 kunci tambahan untuk posting media sosial:
-- "caption": 2–4 kalimat bahasa Indonesia santai untuk TikTok/Instagram/Facebook: kalimat pembuka yang memancing, isi singkat sesuai video, ajakan (cek katalog barokahfarm.pages.dev atau chat WA 0878-9014-0532). Boleh 1–2 emoji. Hanya fakta yang diizinkan.
-- "hashtag": 5–8 tagar relevan, contoh ["#barokahfarm", "#kambing", "#aqiqah", "#tangerang"].
-- "judul": judul pendek ≤ 70 karakter (dipakai sebagai judul TikTok)."""
+- "caption": 2–3 kalimat bahasa Indonesia santai: kalimat pembuka yang memancing rasa ingin tahu, lalu isi singkat sesuai video. Boleh 1–2 emoji.
+  JANGAN tulis harga, DP, nomor WA, rekening, link, atau kata jual/beli/harga/DP/transfer/termurah/terbaik/halal (ajakan & link ditambahkan otomatis per platform).
+- "hashtag": TEPAT 4–5 tagar relevan dan spesifik (Instagram membatasi 5), contoh ["#barokahfarm", "#peternakankambing", "#aqiqah", "#tangerang"]. Jangan tagar umum yang spam (#fyp #viral).
+- "judul": judul pendek ≤ 70 karakter (dipakai sebagai judul TikTok), tanpa harga/kontak.
+- "tema": 1–3 kata topik video (mis. "aqiqah", "tips qurban", "suasana kandang", "kenalan", "reseller").
+- "prioritas": angka 1..n urutan posting yang kamu sarankan untuk naskah-naskah ini (1 = paling kuat untuk diposting duluan: hook paling kuat, paling relevan dengan musim/tanggal sekarang)."""
 
 def target_video(K):
     layak = [k for k in K.values() if k and not k.get('rusak')]
@@ -260,6 +266,10 @@ def periksa(spec, K, no, info):
     tg = ['#' + re.sub(r'[^0-9A-Za-z_]', '', str(t).lstrip('#')) for t in tg][:8]
     spec['hashtag'] = [t for t in tg if len(t) > 1] or ['#barokahfarm', '#kambing', '#domba', '#aqiqah', '#qurban']
     spec['judul'] = str(spec.get('judul') or judul.replace('-', ' ')).strip()[:80]
+    spec['hashtag'] = spec['hashtag'][:5]
+    spec['tema'] = str(spec.get('tema') or g).strip()[:40]
+    try: spec['prioritas'] = int(spec.get('prioritas') or no)
+    except Exception: spec['prioritas'] = no
     # uji cepat: susun timeline (tanpa render)
     p = f"{info['kerja']}/spec_{spec['id']}.json"; json.dump(spec, open(p, 'w'), ensure_ascii=False, indent=1)
     r = subprocess.run([sys.executable, f'{E}/edit.py', p, '--timeline'], capture_output=True, text=True, env=dict(os.environ))

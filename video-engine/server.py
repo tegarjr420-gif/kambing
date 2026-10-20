@@ -3,7 +3,7 @@ import os, re, json, threading, time, glob, shutil, urllib.parse, traceback
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import pipeline
 
-VERSI = '2026-10-20.4'
+VERSI = '2026-10-20.5'
 KEY = os.environ.get('ENGINE_KEY', '')
 MENIT = float(os.environ.get('CEK_MENIT', '20'))
 TERAKHIR = {'cek': None, 'hasil': None}
@@ -65,7 +65,7 @@ class H(BaseHTTPRequestHandler):
             p = f'{skrip.BERKAS}/{os.path.basename(u.path)}'
             if not re.fullmatch(r'[\w-]{20,40}\.pdf', os.path.basename(u.path)) or not os.path.exists(p): return s.kirim(404, dict(ok=False))
             return s.kirim(200, open(p, 'rb').read(), 'application/pdf')
-        if u.path in ('/cek', '/uji-ai', '/uji-wa', '/uji-drive', '/ulang', '/skrip', '/posting/selesai', '/posting/status', '/hapus-tugas', '/skrip-status'): return s.do_POST()
+        if u.path in ('/cek', '/uji-ai', '/uji-wa', '/uji-drive', '/ulang', '/skrip', '/posting/selesai', '/posting/status', '/hapus-tugas', '/skrip-status', '/dokumen-status'): return s.do_POST()
         if u.path in ('/', '/sehat'):
             return s.kirim(200, dict(ok=True, versi=VERSI, sibuk=pipeline.SEKARANG['tugas'], cek_terakhir=TERAKHIR))
         if not s.boleh(q): return s.kirim(403, dict(ok=False, galat='kunci'))
@@ -167,6 +167,20 @@ class H(BaseHTTPRequestHandler):
             if not chat: return s.kirim(400, dict(ok=False, galat='chat_id kosong'))
             skrip.mulai(chat, body.get('permintaan') or q.get('permintaan', [''])[0], str(body.get('tes', q.get('tes', ['0'])[0])).lower() in ('1', 'true'))
             return s.kirim(200, dict(ok=True, mulai=True))
+        if u.path in ('/invoice', '/rekap'):  # dari n8n: data invoice / laporan keuangan -> PDF -> WA
+            import dokumen
+            n = int(s.headers.get('Content-Length') or 0); body = json.loads(s.rfile.read(n) or b'{}') if n else {}
+            tes = str(body.get('tes', '')).lower() in ('1', 'true')
+            if u.path == '/invoice':
+                if not body.get('invoice'): return s.kirim(400, dict(ok=False, galat='invoice kosong'))
+                dokumen.mulai(dokumen.kirim_invoice, body['invoice'], body.get('chat_id'), tes)
+            else:
+                if not body.get('laporan'): return s.kirim(400, dict(ok=False, galat='laporan kosong'))
+                dokumen.mulai(dokumen.kirim_rekap, body['laporan'], body.get('chat_id'), tes)
+            return s.kirim(200, dict(ok=True, mulai=True))
+        if u.path == '/dokumen-status':
+            import dokumen
+            return s.kirim(200, dict(status=dokumen.STATUS))
         if u.path == '/skrip-status':
             import skrip
             return s.kirim(200, dict(status=skrip.STATUS))

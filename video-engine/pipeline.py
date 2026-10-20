@@ -201,7 +201,8 @@ def simpan_caption(T, specs, hasil):
         sp = by_file.get(v['file'], {})
         if v.get('drive_id'):
             posting.simpan_caption(v['drive_id'], dict(nama=os.path.basename(v['file']), judul=sp.get('judul', ''), caption=sp.get('caption', ''),
-                                                       hashtag=sp.get('hashtag', []), gaya=v.get('gaya'), durasi=v.get('durasi'), tugas=T.id))
+                                                       hashtag=sp.get('hashtag', []), gaya=v.get('gaya'), durasi=v.get('durasi'), tugas=T.id,
+                                                       tema=sp.get('tema', ''), prioritas=sp.get('prioritas', 9)))
 
 def hapus_qc(T):
     url, key = os.environ.get('QC_STORAGE_URL'), os.environ.get('QC_STORAGE_KEY')
