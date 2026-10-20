@@ -54,8 +54,13 @@ def terakhir_posting():
     w = [v.get('waktu') for v in T.values() if v.get('waktu') and v.get('berhasil')]
     return max(w) if w else None
 
-def ambil(jeda_hari=3, paksa=False):
+def ambil(jeda_hari=3, paksa=False, uji_id='', uji_nama=''):
     """video berikutnya untuk diposting; 'jadwal' False bila belum waktunya (jeda dihitung per tanggal WIB)"""
+    if uji_id:  # uji: video tertentu (mis. dari arsip), tidak mengubah antrean
+        c = caption_cadangan(uji_nama or 'Uji')
+        st = stok_aman()
+        return dict(jadwal=True, ada=True, id=uji_id, nama=uji_nama, media_url=url_media(uji_id), judul=c['judul'],
+                    teks=c['caption'] + '\n\n' + ' '.join(c['hashtag']), stok=st, stok_setelah=st, uji=True)
     akhir = terakhir_posting()
     hari_ini = datetime.datetime.now(WIB).date()
     if akhir and not paksa:
@@ -71,9 +76,10 @@ def ambil(jeda_hari=3, paksa=False):
                 judul=(c.get('judul') or judul_dari_nama(f['nama']))[:90], teks=(c.get('caption', '') + ('\n\n' + tag if tag else '')).strip(),
                 stok=len(st), stok_setelah=len(st) - 1, terakhir=akhir)
 
-def selesai(fid, nama, hasil):
+def selesai(fid, nama, hasil, uji=False):
     """hasil: [{layanan, ok, post_id, pesan}] dari Buffer. Dianggap terposting bila minimal satu kanal berhasil."""
     berhasil = any(h.get('ok') for h in hasil)
+    if uji: return dict(ok=True, berhasil=berhasil, stok=stok_aman(), uji=True)
     with _kunci:
         T = _baca('terposting.json', {})
         lama = T.get(fid, {})

@@ -120,7 +120,7 @@ class H(BaseHTTPRequestHandler):
                                      df=subprocess.run(['df', '-h', pipeline.DATA], capture_output=True, text=True).stdout))
         if u.path == '/posting/ambil':
             import posting
-            try: return s.kirim(200, posting.ambil(int(q.get('jeda_hari', ['3'])[0]), q.get('paksa', ['0'])[0] == '1'))
+            try: return s.kirim(200, posting.ambil(int(q.get('jeda_hari', ['3'])[0]), q.get('paksa', ['0'])[0] == '1', q.get('uji_id', [''])[0], q.get('uji_nama', [''])[0]))
             except Exception as e: return s.kirim(200, dict(jadwal=False, ada=False, galat=str(e)[:300]))
         if u.path == '/posting/cek':
             import posting
@@ -155,7 +155,7 @@ class H(BaseHTTPRequestHandler):
             import posting
             n = int(s.headers.get('Content-Length') or 0); body = json.loads(s.rfile.read(n) or b'{}') if n else {}
             fid = body.get('id') or q.get('id', [''])[0]
-            return s.kirim(200, posting.selesai(fid, body.get('nama') or q.get('nama', [''])[0], body.get('hasil') or []))
+            return s.kirim(200, posting.selesai(fid, body.get('nama') or q.get('nama', [''])[0], body.get('hasil') or [], bool(body.get('uji'))))
         if u.path == '/posting/status':
             import posting
             posting.catat_status(q.get('id', [''])[0], q.get('post', [''])[0], q.get('status', [''])[0], q.get('tautan', [''])[0], q.get('pesan', [''])[0])
