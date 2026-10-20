@@ -292,3 +292,7 @@ begin
                   '|| E''\n• Uang masuk: '' || _rp(coalesce((select sum(t.nominal) from transaksi t where (t.waktu at time zone ''Asia/Jakarta'')::date = v_kmr), 0)::int) || '' (ketik *rekapan* untuk laporan PDF)'' || E''\n• Ulasan baru: ''');
   execute d;
 end $$;
+
+-- Revisi 2026-10-20 sore (permintaan pemilik): invoice HANYA dikirim saat LUNAS / laku di kandang.
+-- konfirmasi_dp tetap mencatat DP di buku kas, tetapi tidak membuat/mengirim invoice DP
+-- (diterapkan lewat migrasi "invoice_hanya_saat_lunas": baris _invoice(r,'DP') + notif invoice dihapus dari admin_aksi).

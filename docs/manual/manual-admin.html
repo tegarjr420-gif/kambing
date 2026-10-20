@@ -46,7 +46,7 @@
   <tr><td>DP</td><td>Uang muka / tanda jadi. Minimal <b>Rp100.000 per ekor</b>. Setelah DP diterima, hewan disisihkan untuk pembeli itu.</td></tr>
   <tr><td>Lunas</td><td>Pembeli sudah membayar semuanya. Batas pelunasan <b>3 × 24 jam</b> sejak DP dikonfirmasi.</td></tr>
   <tr><td>Ongkir</td><td>Ongkos kirim. Gratis se-Jabodetabek sesuai syarat jarak. Kalau di luar syarat, ongkir ditulis saat pelunasan.</td></tr>
-  <tr><td>Invoice</td><td><b>Nota resmi</b> berbentuk file PDF dengan kop Barokah Farm, logo, dan alamat. Dibuat dan dikirim <b>otomatis</b> oleh bot ke WhatsApp pembeli.</td></tr>
+  <tr><td>Invoice</td><td><b>Nota resmi</b> berbentuk file PDF dengan kop Barokah Farm, logo, dan alamat. Dikirim <b>otomatis</b> oleh bot ke WhatsApp pembeli <b>saat pesanan LUNAS</b> (atau saat laku di kandang).</td></tr>
   <tr><td>Stok</td><td>Jumlah ekor yang tersedia dan tampil di website katalog.</td></tr>
   <tr><td>Katalog</td><td>Website <b>barokahfarm.pages.dev</b>, tempat pembeli melihat foto, berat, dan harga.</td></tr>
   <tr><td>YA / batal</td><td>Jawaban untuk menyetujui atau membatalkan perintah yang dibacakan bot.</td></tr>
@@ -67,10 +67,9 @@
       <div class="b saya"><small>Bapak</small>OK 12</div>
       <div class="b bot"><small>Bot</small>📝 Konfirmasi DP sudah masuk untuk pesanan #12. Pembeli akan dikabari batas pelunasannya.<br>Balas <b>YA</b> untuk menyimpan, atau <b>batal</b>.</div>
       <div class="b saya"><small>Bapak</small>YA</div>
-      <div class="b bot"><small>Bot</small>✅ #12 K-01 Kambing Jawa: DP Rp100.000 dikonfirmasi, batas lunas 23/10 15:28. Invoice DP INV/BF/2610/0001 dikirim ke pembeli.</div>
+      <div class="b bot"><small>Bot</small>✅ #12 K-01 Kambing Jawa: DP Rp100.000 dikonfirmasi, batas lunas 23/10 15:28. Invoice dikirim ke pembeli nanti saat LUNAS.</div>
     </div>
-    Pembeli otomatis menerima <b>Invoice DP</b>, yang berisi DP diterima, sisa yang harus dibayar, dan batas waktunya:
-    <div class="chat"><div class="b bot"><small>Bot ke pembeli</small><div class="file"><i>PDF</i> Invoice-INV-BF-2610-0001.pdf</div>🧾 Invoice DP · Terima kasih, DP Rp100.000 untuk pesanan #12 sudah kami terima. Sisa pembayaran Rp1.700.000…</div></div></li>
+    Pembeli otomatis dikabari bahwa DP sudah diterima, berapa sisa yang harus dibayar, dan batas waktunya. <b>Invoice belum dikirim</b>: invoice baru dikirim saat pesanan LUNAS.</li>
   <li><b>Pembeli melunasi.</b> Ada dua cara, lihat bab 4.</li>
 </ol>
 <div class="kotak merah"><b>Kalau pembeli tidak melunasi dalam 3 × 24 jam:</b> bot mengingatkan pembeli sehari sebelumnya. Kalau tetap tidak lunas, pesanan <b>batal otomatis</b>, DP hangus (untuk biaya pakan &amp; perawatan), dan stok kembali ke katalog. Bapak mendapat kabar.</div>
