@@ -48,12 +48,63 @@ td{{padding:2.4mm 3mm;border-bottom:1px solid #ece5d5;vertical-align:top}}
 .muted{{color:#7a857c}}
 """
 
+# ------------------------------------------------------------------ foto hewan di invoice
+MAKS_FOTO = 6
+
+def siapkan_foto(sumber, folder):
+    """Unduh foto (URL Supabase / path lokal), putar sesuai EXIF, kecilkan -> daftar path JPEG lokal."""
+    from PIL import Image, ImageOps
+    import io, requests
+    os.makedirs(folder, exist_ok=True); hasil = []
+    for i, u in enumerate([x for x in (sumber or []) if isinstance(x, str) and x.strip()][:MAKS_FOTO]):
+        try:
+            if u.startswith('http'):
+                r = requests.get(u, timeout=25); r.raise_for_status(); im = Image.open(io.BytesIO(r.content))
+            else:
+                im = Image.open(u.replace('file://', ''))
+            im = ImageOps.exif_transpose(im).convert('RGB'); im.thumbnail((1600, 1600))
+            f = f'{folder}/foto{i + 1}.jpg'; im.save(f, 'JPEG', quality=84); hasil.append(f)
+        except Exception as e:
+            print('foto invoice dilewati:', str(u)[:80], e, flush=True)
+    return hasil
+
+def html_foto(files, d):
+    """Bingkai + grid foto: 1 besar · 2 berdampingan · 3 (1 besar + 2 kecil) · 4 (2x2) · 5-6 (3x2)."""
+    n = len(files)
+    if not n: return ''
+    it = d.get('item') or {}
+    kotak = lambda f, k, i: f'<figure class="bk {k}"><img src="file://{f}"><figcaption>{i}</figcaption></figure>'
+    if n == 1: isi = kotak(files[0], 'satu', 'Foto 1'); g = 'g1'
+    elif n == 2: isi = ''.join(kotak(f, '', f'Foto {i + 1}') for i, f in enumerate(files)); g = 'g2'
+    elif n == 3: isi = kotak(files[0], 'besar', 'Foto 1') + ''.join(kotak(f, '', f'Foto {i + 2}') for i, f in enumerate(files[1:])); g = 'g3'
+    elif n == 4: isi = ''.join(kotak(f, '', f'Foto {i + 1}') for i, f in enumerate(files)); g = 'g4'
+    else: isi = ''.join(kotak(f, '', f'Foto {i + 1}') for i, f in enumerate(files)); g = 'g6'
+    ket = ' · '.join(x for x in [esc(it.get('kode')), esc(it.get('nama')), f"diserahkan {esc(d.get('tanggal'))}"] if x)
+    return f"""<div class="foto"><div class="fj"><span class="pita">FOTO HEWAN</span><span class="fk">{ket}</span></div>
+      <div class="grid {g}">{isi}</div></div>"""
+
+GAYA_FOTO = """
+.foto{margin-top:5mm;border:1.5px solid #C9A227;border-radius:3.5mm;padding:3mm 3mm 3.2mm;background:#FBF8F0;position:relative;break-inside:avoid}
+.foto:before{content:"";position:absolute;inset:1.2mm;border:.6px dashed #d9c27a;border-radius:2.6mm;pointer-events:none}
+.fj{display:flex;align-items:center;gap:3mm;margin:0 0 2.6mm;position:relative}
+.pita{background:#1E4A2C;color:#fff;font:800 8.4pt J;letter-spacing:.12em;padding:1.2mm 3.2mm;border-radius:1.6mm}
+.fk{font:600 8.8pt J;color:#5b6a5f}
+.grid{display:grid;gap:2.6mm;position:relative}
+.g1{grid-template-columns:1fr} .g2{grid-template-columns:1fr 1fr} .g4{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1.55fr 1fr;grid-template-rows:1fr 1fr} .g6{grid-template-columns:repeat(3,1fr)}
+.bk{margin:0;background:#fff;padding:1.6mm;border-radius:2.2mm;box-shadow:0 .5mm 1.8mm rgba(30,74,44,.18);border:1px solid #e3dccb;position:relative}
+.bk img{display:block;width:100%;object-fit:cover;border-radius:1.4mm}
+.g1 .bk img{height:66mm} .g2 .bk img{height:52mm} .g4 .bk img{height:31mm} .g6 .bk img{height:31mm}
+.g3 .bk img{height:29.2mm} .g3 .besar{grid-row:1 / span 2} .g3 .besar img{height:62.8mm}
+.bk figcaption{position:absolute;left:3.2mm;bottom:3.2mm;background:rgba(30,74,44,.88);color:#fff;font:700 7.2pt J;padding:.6mm 2mm;border-radius:1.2mm}
+"""
+
 # ------------------------------------------------------------------ invoice
 JUDUL = {'DP': ('INVOICE · TANDA TERIMA DP', 'DP DITERIMA', '#C9A227'),
          'LUNAS': ('INVOICE · PELUNASAN', 'LUNAS', '#1E4A2C'),
          'PENJUALAN': ('INVOICE · PENJUALAN', 'LUNAS', '#1E4A2C')}
 
-def html_invoice(d):
+def html_invoice(d, foto=None):
     j = d.get('jenis', 'LUNAS'); judul, cap, warna = JUDUL.get(j, JUDUL['LUNAS'])
     it = d.get('item') or {}; pl = d.get('pelanggan') or {}
     uraian = esc(it.get('nama') or it.get('kode'))
@@ -90,20 +141,21 @@ def html_invoice(d):
           {'Hewan diambil langsung di kandang.' if d.get('ambil_sendiri') else 'Tim kami akan mengatur pengiriman sesuai jadwal yang disepakati.'}
           Simpan invoice ini sebagai bukti pembelian. Pertanyaan: WhatsApp {USAHA['wa']}.</div>"""
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>{GAYA}
-.atas{{display:flex;justify-content:space-between;align-items:flex-start;margin-top:8mm}}
+.hal{{min-height:296mm;height:296mm;overflow:hidden}}
+.atas{{display:flex;justify-content:space-between;align-items:flex-start;margin-top:6mm}}
 .atas h3{{font:800 15pt B,sans-serif;margin:0;color:#1d2a20;letter-spacing:.3px}}
 .meta td{{border:0;padding:.6mm 0 .6mm 4mm;font-size:9.2pt}} .meta td:first-child{{color:#7a857c;padding-left:0}}
-.ke{{margin-top:6mm;background:#F6F2E8;border-radius:3mm;padding:3.5mm 4.5mm;font-size:9.6pt}}
+.ke{{margin-top:4.5mm;background:#F6F2E8;border-radius:3mm;padding:3.5mm 4.5mm;font-size:9.6pt}}
 .ke .lbl{{font:700 8pt J;color:#8a6d12;letter-spacing:.06em;text-transform:uppercase;margin-bottom:1mm}}
-.item{{margin-top:6mm}}
-.ringkas{{display:flex;justify-content:flex-end;margin-top:4mm}}
+.item{{margin-top:4.5mm}}
+.ringkas{{display:flex;justify-content:space-between;align-items:center;margin-top:3mm}}
 .ringkas table{{width:88mm}} .ringkas td{{border-bottom:1px dashed #e3dccb;padding:2mm 0}}
 .ringkas tr.tebal td{{font:800 11pt J;color:#1E4A2C;border-bottom:2px solid #1E4A2C}}
-.cap{{position:absolute;right:20mm;top:96mm;transform:rotate(-12deg);border:4px solid {warna};color:{warna};border-radius:4mm;
+.cap{{margin-left:14mm;transform:rotate(-10deg);border:4px solid {warna};color:{warna};border-radius:4mm;
   padding:2mm 6mm;font:800 22pt B,sans-serif;letter-spacing:2px;opacity:.85}}
-.info{{margin-top:7mm;border-radius:3mm;padding:3.5mm 4.5mm;font-size:9.3pt}} .info ul{{margin:1.5mm 0 0;padding-left:5mm}} .info li{{margin:1mm 0}}
+.info{{margin-top:5mm;border-radius:3mm;padding:3.5mm 4.5mm;font-size:9.3pt}} .info ul{{margin:1.5mm 0 0;padding-left:5mm}} .info li{{margin:1mm 0}}
 .kuning{{background:#fff6dc;border:1px solid #f0d891}} .hijau{{background:#e9f8ee;border:1px solid #bfe3cb}}
-</style></head><body><div class="hal">
+{GAYA_FOTO}</style></head><body><div class="hal">
 <div class="kop"><img src="file://{E}/aset/logo.png"><div><h1>{USAHA['nama']}</h1><div class="tag">{USAHA['tagline']}</div>
 <div class="al">{USAHA['alamat']}</div></div>
 <div class="kanan">WhatsApp <b>{USAHA['wa']}</b><br>Katalog <b>{USAHA['web']}</b><br>Instagram/TikTok <b>{USAHA['ig']}</b><br>{USAHA['sejak']}</div></div>
@@ -114,8 +166,8 @@ def html_invoice(d):
 <div class="ke"><div class="lbl">Kepada</div><b>{esc(pl.get('nama') or 'Pelanggan Barokah Farm')}</b>
 {('<br>WhatsApp: ' + esc(pl.get('wa'))) if pl.get('wa') else ''}{('<br>Alamat: ' + esc(pl.get('alamat'))) if pl.get('alamat') else ''}</div>
 <table class="item"><tr><th>Uraian</th><th class="r">Jumlah</th><th class="r">Harga</th></tr>{baris}</table>
-<div class="ringkas"><table>{rinci_html}</table></div>
-<div class="cap">{cap}</div>
+<div class="ringkas"><div class="cap">{cap}</div><table>{rinci_html}</table></div>
+{html_foto(foto or [], d)}
 {info}
 <div class="kaki"><span>Invoice ini dibuat otomatis oleh sistem Barokah Farm dan sah tanpa tanda tangan.</span><span>Rekening resmi: {esc(d.get('rekening'))}</span></div>
 </div></body></html>"""
@@ -133,6 +185,18 @@ def teks_invoice(d):
                 + ".\nTerima kasih sudah berbelanja di Barokah Farm 🙏")
     return (f"🧾 *Invoice {d.get('no')}*\nTerima kasih sudah membeli langsung di kandang Barokah Farm 🙏\n"
             f"{nama} × {it.get('jumlah') or 1}, total *{rp(d.get('total'))}*, status *LUNAS*.")
+
+def teks_teruskan(d):
+    """Pesan ke ADMIN: invoice penjualan kandang diteruskan manual dari HP admin (nomor CS aman dari blokir)."""
+    it = d.get('item') or {}; pl = d.get('pelanggan') or {}; wa = d.get('teruskan_ke') or ''
+    nama = it.get('nama') or it.get('kode')
+    t = (f"🧾 *Invoice penjualan kandang {d.get('no')}*\n{nama} × {it.get('jumlah') or 1}, total *{rp(d.get('total'))}*"
+         f"{' · ' + str(len(d.get('foto') or [])) + ' foto' if d.get('foto') else ''}\nPembeli: {pl.get('nama') or '-'}\n\n")
+    if wa:
+        return t + (f"👉 Mohon *teruskan PDF ini* ke pembeli dari HP admin: wa.me/{wa}\n"
+                    "(Tekan lama file ini → Teruskan, atau buka link di atas lalu kirim filenya.)\n"
+                    "Bot tidak mengirim langsung ke nomor baru supaya nomor CS aman dari blokir WhatsApp.")
+    return t + "Nomor WA pembeli tidak dicatat. Simpan atau cetak invoice ini untuk pembeli."
 
 # ------------------------------------------------------------------ laporan keuangan
 JENIS = {'dp': 'DP masuk', 'pelunasan': 'Pelunasan', 'penjualan_kandang': 'Jual di kandang', 'refund_dp': 'DP dikembalikan'}
@@ -214,13 +278,23 @@ def url_berkas(tok):
 
 STATUS = {}
 
+def buat_invoice(d):
+    """-> (token, path pdf). Foto hewan (d['foto'] = daftar URL) diunduh sementara lalu dihapus."""
+    import shutil
+    tmp = f'{BERKAS}/foto-' + secrets.token_hex(6)
+    try:
+        return pdf(html_invoice(d, siapkan_foto(d.get('foto'), tmp)), 'inv')
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
 def kirim_invoice(d, chat_id, tes=False):
     import pipeline
     try:
-        tok, _ = pdf(html_invoice(d), 'inv')
+        tok, _ = buat_invoice(d)
         nama = 'Invoice-' + str(d.get('no', '')).replace('/', '-') + '.pdf'
         STATUS[d.get('no')] = url_berkas(tok)
-        if not tes and chat_id: pipeline.lapor_wa(teks_invoice(d), print, chat_id=chat_id, berkas_url=url_berkas(tok), berkas_nama=nama)
+        teks = teks_teruskan(d) if d.get('ke_admin') else teks_invoice(d)
+        if not tes and chat_id: pipeline.lapor_wa(teks, print, chat_id=chat_id, berkas_url=url_berkas(tok), berkas_nama=nama)
         print(f"invoice {d.get('no')} -> {str(chat_id)[:6]}… {url_berkas(tok)}", flush=True)
     except Exception as e:
         STATUS[d.get('no')] = 'gagal: ' + str(e)[:200]; print('invoice gagal:', e, flush=True)

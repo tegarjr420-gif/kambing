@@ -3,7 +3,7 @@ import os, re, json, threading, time, glob, shutil, urllib.parse, traceback
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import pipeline
 
-VERSI = '2026-10-20.5'
+VERSI = '2026-10-20.6'
 KEY = os.environ.get('ENGINE_KEY', '')
 MENIT = float(os.environ.get('CEK_MENIT', '20'))
 TERAKHIR = {'cek': None, 'hasil': None}
@@ -184,7 +184,8 @@ class H(BaseHTTPRequestHandler):
                      pelanggan=dict(nama='Uji', wa='62800'), item=dict(kode='K-01', nama='Kambing Jawa', jumlah=1),
                      harga=1500000, ongkir=0, total=1500000, dp=100000, dibayar=1500000, pelunasan=1400000, sisa=0, rekening='BRI')
             try:
-                tok, p = dokumen.pdf(dokumen.html_invoice(d), 'inv'); return s.kirim(200, dict(ok=True, url=dokumen.url_berkas(tok), ukuran=os.path.getsize(p)))
+                d['foto'] = [x for x in q.get('foto', [''])[0].split(',') if x]
+                tok, p = dokumen.buat_invoice(d); return s.kirim(200, dict(ok=True, url=dokumen.url_berkas(tok), ukuran=os.path.getsize(p)))
             except Exception as e:
                 return s.kirim(200, dict(ok=False, galat=str(e)[:400]))
         if u.path == '/dokumen-status':
