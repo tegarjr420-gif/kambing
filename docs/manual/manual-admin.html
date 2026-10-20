@@ -46,7 +46,7 @@
   <tr><td>DP</td><td>Uang muka / tanda jadi. Minimal <b>Rp100.000 per ekor</b>. Setelah DP diterima, hewan disisihkan untuk pembeli itu.</td></tr>
   <tr><td>Lunas</td><td>Pembeli sudah membayar semuanya. Batas pelunasan <b>3 × 24 jam</b> sejak DP dikonfirmasi.</td></tr>
   <tr><td>Ongkir</td><td>Ongkos kirim. Gratis se-Jabodetabek sesuai syarat jarak. Kalau di luar syarat, ongkir ditulis saat pelunasan.</td></tr>
-  <tr><td>Invoice</td><td><b>Nota resmi</b> berbentuk file PDF dengan kop Barokah Farm, logo, dan alamat. Dikirim <b>otomatis</b> oleh bot ke WhatsApp pembeli <b>saat pesanan LUNAS</b> (atau saat laku di kandang).</td></tr>
+  <tr><td>Invoice</td><td><b>Nota resmi</b> berbentuk file PDF dengan kop Barokah Farm, logo, dan alamat. Pesanan online: dikirim <b>otomatis</b> oleh bot ke WhatsApp pembeli <b>saat LUNAS</b>. Penjualan di kandang: dikirim ke <b>WhatsApp Bapak</b>, lalu Bapak yang meneruskannya ke pembeli. Foto hewan bisa ikut dicetak di invoice.</td></tr>
   <tr><td>Stok</td><td>Jumlah ekor yang tersedia dan tampil di website katalog.</td></tr>
   <tr><td>Katalog</td><td>Website <b>barokahfarm.pages.dev</b>, tempat pembeli melihat foto, berat, dan harga.</td></tr>
   <tr><td>YA / batal</td><td>Jawaban untuk menyetujui atau membatalkan perintah yang dibacakan bot.</td></tr>
@@ -92,24 +92,27 @@
 <div class="chat"><div class="b saya">lunas 12 harga 1,5jt ongkir 100rb</div></div>
 <div class="hitung">Rp1.500.000 + ongkir Rp100.000 − DP Rp100.000 = pembeli membayar <u>Rp1.500.000</u></div>
 <p>Hewan diambil sendiri ke kandang? Tulis: <code>lunas 12 harga 1,5jt diambil</code>.</p>
-<div class="kotak hijau">Setelah YA, pembeli <b>otomatis</b> menerima <b>Invoice LUNAS</b> (PDF ber-kop) berisi total harga, DP, pelunasan, dan status ongkir. Uangnya otomatis masuk ke <b>rekapan keuangan</b>.</div>
+<div class="kotak hijau">Setelah YA, pembeli <b>otomatis</b> menerima <b>Invoice LUNAS</b> (PDF ber-kop) berisi total harga, DP, pelunasan, status ongkir, dan <b>foto hewannya</b> (kalau dikirim). Uangnya otomatis masuk ke <b>rekapan keuangan</b>.</div>
+<div class="kotak kuning"><b>📷 Supaya foto kambingnya ada di invoice:</b> foto kambing yang dibeli, lalu kirim fotonya ke bot dengan tulisan perintahnya di bawah foto, misalnya foto + <code>lunas 12 harga 1,5jt</code>. Mau lebih dari 1 foto (paling banyak 6)? Kirim foto berikutnya <b>sebelum</b> membalas YA. Bot membalas "Foto ke-2 masuk invoice", dan seterusnya.</div>
 <div class="kotak"><b>Cara menulis uang</b> (semuanya dimengerti bot): <code>1,5jt</code> · <code>1.5jt</code> · <code>1.500.000</code> · <code>1500000</code> · <code>150rb</code> · <code>100k</code></div>
 
 <div class="bab"></div>
 <h2><span class="n">5</span>Pembeli datang langsung ke kandang (offline)</h2>
-<p>Pembeli tidak memesan lewat WhatsApp, tetapi langsung datang, memilih, dan membayar di kandang. Setelah dibayar, ketik:</p>
-<div class="chat"><div class="b saya"><small>Staf / Bapak</small>laku K-01 1 harga 1,6jt wa 0812 3456 7890 nama Pak Budi</div>
-  <div class="b bot"><small>Bot</small>📝 1 ekor K-01 laku di kandang seharga Rp1.600.000 (pembeli: Pak Budi). Stok dikurangi, masuk rekap keuangan, invoice dikirim ke WA 081234567890.</div><div class="b saya">YA</div></div>
+<p>Pembeli tidak memesan lewat WhatsApp, tetapi langsung datang, memilih, dan membayar di kandang. Setelah dibayar, <b>foto kambingnya</b>, lalu kirim fotonya dengan tulisan di bawahnya:</p>
+<div class="chat"><div class="b saya"><small>Staf / Bapak</small><div class="file"><i>FOTO</i> foto kambing</div>laku K-01 1 harga 1,6jt wa 0812 3456 7890 nama Pak Budi</div>
+  <div class="b bot"><small>Bot</small>📝 1 ekor K-01 laku di kandang seharga Rp1.600.000 (pembeli: Pak Budi). Stok dikurangi, masuk rekap keuangan, invoice dikirim ke WA admin untuk diteruskan ke pembeli 081234567890.<br>📷 1 foto hewan masuk invoice…</div><div class="b saya">YA</div>
+  <div class="b bot"><small>Bot → WhatsApp Bapak</small><div class="file"><i>PDF</i> Invoice-INV-BF-2610-0002.pdf</div>👉 Mohon teruskan PDF ini ke pembeli dari HP admin: wa.me/6281234567890</div></div>
 <table>
   <tr><th>Bagian</th><th>Artinya</th></tr>
   <tr><td class="k"><code>laku K-01</code></td><td>kode hewan yang laku (lihat kamus)</td></tr>
   <tr><td class="k"><code>1</code></td><td>jumlah ekor</td></tr>
   <tr><td class="k"><code>harga 1,6jt</code></td><td>TOTAL uang yang dibayar pembeli untuk semua ekor itu</td></tr>
-  <tr><td class="k"><code>wa 0812…</code></td><td>nomor WhatsApp pembeli, untuk dikirimi invoice</td></tr>
+  <tr><td class="k"><code>wa 0812…</code></td><td>nomor WhatsApp pembeli. Invoice dikirim ke Bapak dulu, lalu Bapak yang meneruskan</td></tr>
   <tr><td class="k"><code>nama Pak Budi</code></td><td>nama pembeli (boleh dilewati)</td></tr>
   <tr><td class="k"><code>ongkir 100rb</code></td><td>tambahkan bila hewan diantar dengan ongkir</td></tr>
 </table>
-<div class="kotak kuning">Yang terjadi otomatis: <b>stok di website berkurang</b>, penjualan <b>masuk rekapan</b>, dan pembeli menerima <b>invoice</b> di WhatsApp-nya. Kalau hanya ditulis <code>laku K-01 1</code> tanpa harga, stok tetap berkurang tetapi <b>tidak tercatat di keuangan</b> dan invoice tidak dikirim.</div>
+<div class="kotak hijau"><b>Kenapa invoice dikirim ke Bapak dulu?</b> Pembeli di kandang belum pernah chat dengan nomor bot. Kalau bot langsung mengirim file ke nomor baru, WhatsApp bisa memblokir nomor CS. Jadi bot mengirim invoice ke Bapak. Bapak cukup <b>tekan lama file PDF-nya → Teruskan</b> ke pembeli, atau klik link wa.me di pesan itu lalu kirim filenya.</div>
+<div class="kotak kuning">Yang terjadi otomatis: <b>stok di website berkurang</b>, penjualan <b>masuk rekapan</b>, dan <b>invoice</b> (dengan foto hewan) masuk ke WhatsApp Bapak untuk diteruskan. Kalau hanya ditulis <code>laku K-01 1</code> tanpa harga, stok tetap berkurang tetapi <b>tidak tercatat di keuangan</b> dan invoice tidak dikirim.</div>
 
 <div class="bab"></div>
 <h2><span class="n">6</span>Mengisi katalog website</h2>
@@ -174,7 +177,7 @@ Pastikan link katalog dan WA tercantum di <b>bio</b> TikTok dan Instagram.</div>
   <tr><td>Ingin membalas pembeli sendiri</td><td><code>ambil alih 0812xxxx</code>. Setelah selesai: <code>bot 0812xxxx</code>.</td></tr>
   <tr><td>Alarm "WhatsApp terputus"</td><td>Tunggu 15 menit (dinyalakan ulang otomatis). Masih putus: hubungi Otomaya.</td></tr>
   <tr><td>Pesan "batas biaya AI" / "AI gangguan"</td><td>Pemilik mengecek saldo Claude. Mesin mencoba lagi sendiri.</td></tr>
-  <tr><td>Invoice tidak sampai ke pembeli</td><td>Pastikan nomor WA pembeli benar. Ketik ulang perintahnya dengan nomor yang benar, atau hubungi Otomaya.</td></tr>
+  <tr><td>Invoice tidak sampai ke pembeli</td><td>Pesanan online: pastikan pembeli pernah chat ke nomor bot. Penjualan kandang: invoice ada di WhatsApp Bapak, teruskan manual ke pembeli.</td></tr>
 </table>
 <p class="kaki">Barokah Farm · Kampung Peusar RT 02/RW 01, Binong, Curug, Tangerang · sejak 2004 · sistem oleh Otomaya</p>
 </body></html>

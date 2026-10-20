@@ -41,23 +41,28 @@
 </ul>
 
 <h2><span class="n">3</span>Pembeli datang dan membeli langsung di kandang</h2>
-<p>Pembeli <b>tidak memesan lewat WhatsApp</b>, tetapi datang, memilih, lalu membayar di kandang. <b>Setelah uangnya diterima</b>, ketik ke bot:</p>
+<p>Pembeli <b>tidak memesan lewat WhatsApp</b>, tetapi datang, memilih, lalu membayar di kandang. <b>Setelah uangnya diterima</b>:</p>
+<ol class="langkah">
+  <li><b>Foto kambing yang dibeli</b> dengan HP.</li>
+  <li>Kirim fotonya ke bot, dan <b>di bawah foto</b> tulis perintahnya:</li>
+</ol>
 <div class="chat"><div class="judul">Contoh</div>
-  <div class="b saya"><small>Bapak</small>laku K-01 1 harga 1,6jt wa 0812 3456 7890 nama Pak Budi</div>
-  <div class="b bot"><small>Bot</small>📝 1 ekor K-01 laku di kandang seharga Rp1.600.000 (pembeli: Pak Budi). Stok dikurangi, masuk rekap keuangan, invoice dikirim ke WA 081234567890.<br>Balas <b>YA</b>…</div>
+  <div class="b saya"><small>Bapak</small><div class="file"><i>FOTO</i> foto kambing</div>laku K-01 1 harga 1,6jt wa 0812 3456 7890 nama Pak Budi</div>
+  <div class="b bot"><small>Bot</small>📝 1 ekor K-01 laku di kandang seharga Rp1.600.000 (pembeli: Pak Budi). Stok dikurangi, masuk rekap keuangan, invoice dikirim ke WA admin…<br>📷 1 foto hewan masuk invoice.<br>Balas <b>YA</b>…</div>
   <div class="b saya"><small>Bapak</small>YA</div>
-  <div class="b bot"><small>Bot</small>✅ 1 ekor Kambing Jawa laku di kandang. Stok K-01 sekarang 9 ekor. Tercatat penjualan #15 Rp1.600.000. Invoice dikirim ke 6281234567890.</div>
+  <div class="b bot"><small>Bot</small>✅ 1 ekor Kambing Jawa laku di kandang. Stok K-01 sekarang 9 ekor. Tercatat penjualan #15 Rp1.600.000. Invoice dikirim ke WhatsApp admin untuk diteruskan ke pembeli.</div>
 </div>
-<table>
+<table style="break-inside:avoid">
   <tr><th>Yang ditulis</th><th>Artinya</th></tr>
   <tr><td class="k"><code>laku K-01</code></td><td>kode kambing/domba yang dibeli</td></tr>
   <tr><td class="k"><code>1</code></td><td>berapa ekor</td></tr>
   <tr><td class="k"><code>harga 1,6jt</code></td><td>TOTAL uang yang dibayar pembeli</td></tr>
-  <tr><td class="k"><code>wa 0812…</code></td><td>nomor WhatsApp pembeli, supaya pembeli dikirimi nota</td></tr>
+  <tr><td class="k"><code>wa 0812…</code></td><td>nomor WhatsApp pembeli. Nota dikirim ke admin, lalu admin yang meneruskan ke pembeli</td></tr>
   <tr><td class="k"><code>nama Pak Budi</code></td><td>nama pembeli (boleh tidak ditulis)</td></tr>
   <tr><td class="k"><code>ongkir 100rb</code></td><td>tulis hanya bila hewan diantar dan ada ongkir</td></tr>
 </table>
-<div class="kotak hijau">Otomatis: <b>stok di website berkurang</b>, uangnya <b>tercatat di laporan</b> admin, dan pembeli <b>menerima invoice</b> di WhatsApp-nya.</div>
+<div class="kotak hijau">Otomatis: <b>stok di website berkurang</b>, uangnya <b>tercatat di laporan</b> admin, dan <b>invoice dengan foto kambingnya</b> dikirim ke admin. Admin yang meneruskan ke pembeli, supaya nomor bot aman dari blokir WhatsApp.</div>
+<div class="kotak kuning"><b>Mau lebih dari 1 foto?</b> Kirim foto berikutnya (tanpa tulisan) <b>sebelum</b> membalas YA. Paling banyak 6 foto.</div>
 <div class="kotak merah"><b>Jangan lupa tulis harganya.</b> Kalau hanya <code>laku K-01 1</code>, stok tetap berkurang tetapi penjualan <b>tidak tercatat di keuangan</b> dan pembeli tidak mendapat nota.</div>
 
 <div class="bab"></div>
@@ -76,7 +81,8 @@
   <li><b>Setelah uangnya diterima</b>, ketik:
     <div class="chat"><div class="b saya"><small>Bapak</small>lunas 12 harga 1,5jt</div>
       <div class="b bot"><small>Bot</small>📝 Tandai LUNAS pesanan #12 dengan harga hewan Rp1.500.000, gratis ongkir…</div><div class="b saya">YA</div>
-      <div class="b bot"><small>Bot</small>✅ #12: LUNAS. Total Rp1.500.000, DP Rp100.000, pelunasan Rp1.400.000. Invoice dikirim ke pembeli.</div></div></li>
+      <div class="b bot"><small>Bot</small>✅ #12: LUNAS. Total Rp1.500.000, DP Rp100.000, pelunasan Rp1.400.000. Invoice dikirim ke pembeli.</div></div>
+    <b>Lebih bagus lagi:</b> foto dulu kambingnya, lalu kirim fotonya dengan tulisan <code>lunas 12 harga 1,5jt</code> di bawah foto. Fotonya ikut masuk ke invoice pembeli.</li>
 </ol>
 <table>
   <tr><th>Keadaan</th><th>Ketik</th></tr>
