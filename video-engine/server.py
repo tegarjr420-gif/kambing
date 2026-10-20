@@ -175,7 +175,7 @@ class H(BaseHTTPRequestHandler):
                 if not body.get('invoice'): return s.kirim(400, dict(ok=False, galat='invoice kosong'))
                 dokumen.mulai(dokumen.kirim_invoice, body['invoice'], body.get('chat_id'), tes)
             else:
-                if not body.get('laporan'): return s.kirim(400, dict(ok=False, galat='laporan kosong'))
+                if not isinstance(body.get('laporan'), dict) or 'ringkas' not in body['laporan']: return s.kirim(400, dict(ok=False, galat='laporan tidak valid'))
                 dokumen.mulai(dokumen.kirim_rekap, body['laporan'], body.get('chat_id'), tes)
             return s.kirim(200, dict(ok=True, mulai=True))
         if u.path == '/dokumen-status':
