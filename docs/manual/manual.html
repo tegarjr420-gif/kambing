@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Manual Admin Barokah Farm</title><link rel="stylesheet" href="manual.css"></head>
+<body>
+
+<!-- ============================ HALAMAN 1: CONTEKAN ============================ -->
+<div class="page padat">
+<header>
+  <img src="logo-bf.png" alt="">
+  <div><h1>Manual Admin · Contekan</h1><p>Semua perintah diketik di WhatsApp ke nomor bot. Bahasa bebas, tidak harus persis.</p></div>
+  <div class="no">Nomor bot (CS)<b>0878-9014-0532</b>Katalog: barokahfarm.pages.dev</div>
+</header>
+
+<div class="box">
+  <h2><span class="n">1</span>Alur satu pesanan</h2>
+  <div class="flow">
+    <span>Pembeli pesan</span><i>→</i><span>Bot tahan 60 menit, kirim ringkasan <b>#12</b></span><i>→</i>
+    <span>Bukti DP diteruskan ke admin</span><i>→</i>
+    <span><code>OK 12</code> / <code>TOLAK 12</code></span><i>→</i><span>Lunas maks. 3×24 jam (diingatkan H-1)</span><i>→</i>
+    <span><code>lunas 12</code></span><i>→</i><span>Bot minta ulasan</span>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="box">
+    <h2><span class="n">2</span>Pesanan (pakai nomor pesanan)</h2>
+    <table>
+      <tr><td>DP sudah masuk</td><td><code>OK 12</code> · banyak: <code>OK 12, 13</code></td></tr>
+      <tr><td>Bukti tidak sah</td><td><code>TOLAK 12 dana belum masuk</code></td></tr>
+      <tr><td>Sudah lunas</td><td><code>lunas 12</code></td></tr>
+      <tr><td>Batalkan pesanan</td><td><code>batalkan pesanan 12</code></td></tr>
+      <tr><td>Lihat ringkasan</td><td><code>stok</code> atau <code>laporan</code></td></tr>
+    </table>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">3</span>Stok &amp; foto produk</h2>
+    <table>
+      <tr><td>Atur stok</td><td><code>stok K-01 24</code></td></tr>
+      <tr><td>Ternak baru</td><td><code>tambah stok K-01 5</code></td></tr>
+      <tr><td>Laku di kandang</td><td><code>laku K-01 2</code></td></tr>
+      <tr><td>Tampil / sembunyi</td><td><code>tampilkan D-01</code><br><code>sembunyikan D-01</code></td></tr>
+      <tr><td>Foto produk</td><td>kirim foto + <code>foto K-01</code></td></tr>
+    </table>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">4</span>Harga &amp; flash sale</h2>
+    <table>
+      <tr><td>Ubah harga</td><td><code>harga K-01 1,9jt</code></td></tr>
+      <tr><td>Aqiqah per ekor</td><td><code>harga AQ-01 3 ekor 7,5jt bobot 23-25kg</code></td></tr>
+      <tr><td>Qurban kelas</td><td><code>harga QK-01 2,5jt berat 23-25kg</code></td></tr>
+      <tr><td>Kelas baru</td><td><code>tambah kambing jawa 25-30kg 2,3jt stok 10</code></td></tr>
+      <tr><td>Flash sale</td><td><code>flash K-01 1,6jt sampai jam 20.00</code></td></tr>
+      <tr><td>Hentikan flash</td><td><code>flash off K-01</code></td></tr>
+      <tr><td>Harga massal</td><td><code>harga domba naik 100rb</code></td></tr>
+    </table>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">5</span>Chat, galeri, ulasan, video</h2>
+    <table>
+      <tr><td>Balas sendiri</td><td><code>ambil alih 0812xxxx</code></td></tr>
+      <tr><td>Kembali ke bot</td><td><code>bot 0812xxxx</code></td></tr>
+      <tr><td>Foto kegiatan</td><td>kirim foto + <code>galeri potong aqiqah</code></td></tr>
+      <tr><td>Hapus galeri</td><td><code>hapus galeri 3</code></td></tr>
+      <tr><td>Ulasan</td><td><code>ulasan</code> · <code>sembunyikan ulasan 3</code></td></tr>
+      <tr><td>Mode kurban</td><td><code>mode kurban on</code> / <code>off</code></td></tr>
+      <tr><td>Script rekam video</td><td><code>minta script mentahan</code> (+ tema, mis. <code>qurban</code>)</td></tr>
+      <tr><td>Semua perintah</td><td><code>bantuan</code></td></tr>
+    </table>
+  </div>
+
+  <div class="box note">
+    <h2><span class="n">6</span>Wajib diingat</h2>
+    <ul>
+      <li>Bot selalu kirim ringkasan dulu: balas <code>YA</code> untuk simpan, <code>batal</code> bila salah.</li>
+      <li>Batal sebelum batas: DP kembali penuh. Lewat 3 hari: batal otomatis, DP untuk pakan &amp; perawatan 1 bulan.</li>
+      <li>Bukti belum dicek 1 jam: bot menenangkan pembeli.</li>
+      <li>Pembeli bisa ketik <code>cek pesanan</code> sendiri.</li>
+    </ul>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">7</span>Otomatis setiap hari</h2>
+    <ul>
+      <li><b>07.00</b> rekap pagi: bukti menunggu cek, jatuh tempo, stok menipis, pengunjung web.</li>
+      <li><b>19.00</b> autopost 1 video (tiap 3 hari) ke TikTok, Instagram, Facebook. <b>21.30</b> laporan tayang.</li>
+      <li>Tiap 20 menit: mesin cek folder <b>1. Video Mentah</b> di Drive (lihat halaman 2).</li>
+      <li>Tiap 5 menit: lepas tahanan 60 menit, pengingat H-1, batal otomatis.</li>
+      <li>Tiap 15 menit: alarm HP (aplikasi <b>ntfy</b>) bila WA terputus / AI gangguan.</li>
+    </ul>
+  </div>
+
+  <div class="box warn">
+    <h2><span class="n">8</span>Kalau ada masalah</h2>
+    <ul>
+      <li>Alarm "WhatsApp terputus": tunggu 15 menit (dinyalakan ulang otomatis). Masih putus: hubungi Otomaya.</li>
+      <li>Alarm "AI gangguan" / "batas biaya AI": pemilik cek saldo Claude, lalu <code>bot 0812xxxx</code> untuk chat yang tertunda.</li>
+      <li>Staf baru: kirim <code>STAF ______</code> (PIN dari Otomaya).</li>
+    </ul>
+  </div>
+</div>
+<footer><span>Barokah Farm · sejak 2004</span><span>Manual admin · hal. 1/3 · versi 20 Oktober 2026 · sistem oleh Otomaya</span></footer>
+</div>
+
+<!-- ============================ HALAMAN 2: VIDEO ============================ -->
+<div class="page">
+<header>
+  <img src="logo-bf.png" alt="">
+  <div><h1>Konten Video Otomatis</h1><p>Admin cukup merekam dan mengunggah. Mengedit, menyimpan, dan memposting dikerjakan mesin.</p></div>
+  <div class="no" style="white-space:nowrap">Folder Google Drive<b style="font-size:11pt">1. Video Mentah</b>2. Video Jadi</div>
+</header>
+
+<div class="box">
+  <h2><span class="n">1</span>Alurnya</h2>
+  <div class="flow">
+    <span><code>minta script mentahan</code></span><i>→</i><span>PDF script dari bot</span><i>→</i><span>Rekam (HP berdiri)</span><i>→</i>
+    <span>Unggah ke <b>1. Video Mentah</b></span><i>→</i><span>Mesin AI mengedit</span><i>→</i><span>Video masuk <b>2. Video Jadi</b>, mentahan dihapus</span><i>→</i>
+    <span>19.00 tiap 3 hari: autopost TikTok · IG · FB</span>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="box">
+    <h2><span class="n">2</span>Langkah admin</h2>
+    <ol class="langkah">
+      <li><b class="t">Minta script</b>Ketik <code>minta script mentahan</code> ke bot (boleh ditambah tema: <code>minta script mentahan aqiqah</code>). ±2 menit kemudian bot mengirim <b>PDF</b> berisi daftar adegan: apa yang direkam, di mana, siapa, dan kalimat yang diucapkan.</li>
+      <li><b class="t">Rekam sesuai PDF</b>Satu adegan = satu file. Centang adegan yang sudah direkam di PDF.</li>
+      <li><b class="t">Unggah semua sekaligus</b>Buka Google Drive → folder <b>1. Video Mentah</b> → unggah semua file. Jangan diedit dan jangan diberi musik.</li>
+      <li><b class="t">Tunggu kabar WA</b>Mesin mulai 15 menit setelah file terakhir masuk. Bot kirim "🎬 Mentahan diterima", lalu "✅ video baru masuk folder 2. Video Jadi" beserta link tiap video.</li>
+      <li><b class="t">Tonton dulu</b>Video yang tidak layak cukup <b>dipindah keluar</b> dari folder 2. Video Jadi, maka tidak ikut diposting.</li>
+    </ol>
+  </div>
+
+  <div class="box note">
+    <h2><span class="n">3</span>Aturan rekam (wajib)</h2>
+    <ul>
+      <li><b>HP berdiri (potrait)</b>, 1080p/4K, lensa dilap dulu.</li>
+      <li>Pegang dua tangan atau pakai tripod, gerak pelan.</li>
+      <li>Bicara: jarak 1–1,5 m, wajah di sepertiga atas, cahaya dari depan, tempat tidak bising.</li>
+      <li><b>Diam 2 detik</b> sebelum &amp; sesudah bicara. Salah ucap? Ulangi kalimatnya, rekaman tidak perlu dihentikan.</li>
+      <li>B-roll (suasana) 8–20 detik per file.</li>
+      <li><b>Jangan</b> merekam penyembelihan/darah, menyebut harga yang belum pasti, atau testimoni karangan.</li>
+    </ul>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">4</span>Yang dikerjakan mesin</h2>
+    <ul>
+      <li>Memilih momen terbaik dan membuat <b>sebanyak mungkin video</b> (±20 mentahan → ±10 video), kalimat tidak terpotong, teks tidak menutupi wajah.</li>
+      <li>Menulis caption + hashtag untuk tiap video.</li>
+      <li>Menyimpan ke <b>2. Video Jadi</b>. Setelah dipastikan semua video aman di Drive, <b>mentahan di Drive dan data di server dihapus</b> agar penyimpanan tidak penuh.</li>
+    </ul>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">5</span>Autopost &amp; stok</h2>
+    <ul>
+      <li>Pukul <b>19.00</b>, tiap <b>3 hari</b>, 1 video terlama di 2. Video Jadi diposting ke <b>TikTok, Instagram Reels, Facebook Reels</b> (lewat Buffer).</li>
+      <li>Pukul 21.30 bot melapor: ✅ tayang (dengan link) atau ❌ gagal.</li>
+      <li>Video yang sudah diposting tidak diposting ulang.</li>
+    </ul>
+    <div class="wa">⚠️ <b>Stok tinggal 2</b> → bot mengingatkan admin untuk rekam mentahan baru. Stok habis → autopost dilewati sampai ada video baru.</div>
+  </div>
+
+  <div class="box warn">
+    <h2><span class="n">6</span>Kalau ada pesan ini</h2>
+    <table>
+      <tr><td>⏳ AI ditunda / batas biaya</td><td>Mentahan aman; mesin coba lagi tiap 30 menit. Pemilik cek saldo Claude.</td></tr>
+      <tr><td>⚠️ Belum masuk Drive</td><td>Mentahan tidak dihapus; mesin unggah ulang otomatis.</td></tr>
+      <tr><td>⚠️ cek bagian bicara</td><td>Tonton bagian bicara; bila ada yang terpotong, pindahkan video keluar dari 2. Video Jadi.</td></tr>
+      <tr><td>❌ Autopost gagal</td><td>Dicoba lagi besok 19.00. Gagal terus: hubungi Otomaya.</td></tr>
+    </table>
+  </div>
+</div>
+<footer><span>Barokah Farm · sejak 2004</span><span>Manual admin · hal. 2/3 · konten video</span></footer>
+</div>
+
+<!-- ============================ HALAMAN 3: KATALOG ============================ -->
+<div class="page">
+<header>
+  <img src="logo-bf.png" alt="">
+  <div><h1>Mengisi Katalog Website</h1><p>Semua isi barokahfarm.pages.dev diatur dari WhatsApp. Kirim ke nomor bot, balas <b>YA</b> saat diminta.</p></div>
+  <div class="no">Website<b>barokahfarm.pages.dev</b>berubah ±1 menit setelah YA</div>
+</header>
+
+<div class="box">
+  <h2><span class="n">1</span>Yang masih harus diisi (per 20 Oktober 2026)</h2>
+  <table class="cek">
+    <colgroup><col style="width:14%"><col style="width:25%"><col style="width:17%"><col style="width:11%"><col style="width:7%"><col style="width:10%"><col style="width:16%"></colgroup>
+    <tr><th class="k">Kode</th><th>Produk</th><th>Harga</th><th>Berat</th><th>Stok</th><th>Foto</th><th>Status</th></tr>
+    <tr><td class="k"><code>K-01</code></td><td>Kambing Jawa</td><td class="ok">Rp1.800.000</td><td>cek</td><td class="kosong">0</td><td class="kosong">belum</td><td>disembunyikan</td></tr>
+    <tr><td class="k"><code>D-01</code></td><td>Domba</td><td class="ok">Rp1.650.000</td><td>cek</td><td class="kosong">0</td><td class="kosong">belum</td><td>disembunyikan</td></tr>
+    <tr><td class="k"><code>AQ-01</code></td><td>Paket Aqiqah + Masak</td><td class="kosong">belum*</td><td class="kosong">belum</td><td>–</td><td class="kosong">belum</td><td>tampil</td></tr>
+    <tr><td class="k"><code>AQ-02</code></td><td>Paket Aqiqah + Potong</td><td class="kosong">belum*</td><td class="kosong">belum</td><td>–</td><td class="kosong">belum</td><td>tampil</td></tr>
+    <tr><td class="k"><code>QP-01…05</code></td><td>Qurban Paket 1–5</td><td class="kosong">belum</td><td class="kosong">belum</td><td>–</td><td class="kosong">belum</td><td>tampil</td></tr>
+    <tr><td class="k"><code>QK-01…05</code></td><td>Qurban Kelas 1–5</td><td class="kosong">belum</td><td class="kosong">belum</td><td>–</td><td class="kosong">belum</td><td>tampil</td></tr>
+    <tr><td class="k">Galeri</td><td>Foto kegiatan kandang</td><td colspan="4" class="kosong">belum ada foto</td><td>–</td></tr>
+    <tr><td class="k">Testimoni</td><td>Foto serah terima pembeli</td><td colspan="4" class="kosong">belum ada foto</td><td>–</td></tr>
+  </table>
+  <p style="margin:1.5mm 0 0;font-size:8.6pt;color:#4b5a4f">* Aqiqah: harga diisi per jumlah ekor (1–10 ekor). Selama harga paket aqiqah/qurban belum diisi, bot CS mengoper pertanyaan harga paket itu ke admin.</p>
+</div>
+
+<div class="grid">
+  <div class="box">
+    <h2><span class="n">2</span>Isi harga &amp; berat</h2>
+    <table>
+      <tr><td>Kambing/domba</td><td><code>harga K-01 1,9jt</code> · <code>stok K-01 10</code> · <code>tampilkan K-01</code></td></tr>
+      <tr><td>Aqiqah per jumlah ekor</td><td><code>harga AQ-01 1 ekor 3,5jt bobot 23-25kg</code><br>ulangi untuk 2, 3 … ekor</td></tr>
+      <tr><td>Qurban paket/kelas</td><td><code>harga QP-01 2,8jt berat 25-28kg</code></td></tr>
+      <tr><td>Ganti nama</td><td><code>ubah nama QP-01 jadi Paket Hemat</code></td></tr>
+      <tr><td>Deskripsi</td><td><code>deskripsi AQ-01: sudah termasuk masak gulai &amp; sate, siap antar</code></td></tr>
+      <tr><td>Kelas baru</td><td><code>tambah domba garut 30-35kg 2,6jt stok 5</code></td></tr>
+    </table>
+    <p style="margin:1.5mm 0 0;font-size:8.6pt;color:#7a857c">Angka di atas hanya contoh. Isi dengan harga asli.</p>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">3</span>Foto lewat WhatsApp</h2>
+    <table>
+      <tr><td>Foto produk</td><td>kirim foto + tulis <code>foto K-01</code> (satu foto, satu kode)</td></tr>
+      <tr><td>Foto kegiatan</td><td>kirim foto + <code>galeri kambing makan pagi</code></td></tr>
+      <tr><td>Testimoni</td><td>kirim foto serah terima + <code>testimoni Pak Budi, Tangerang</code></td></tr>
+      <tr><td>Hapus galeri</td><td><code>hapus galeri 3</code></td></tr>
+    </table>
+    <p style="margin:1.5mm 0 0;font-size:8.6pt;color:#4b5a4f">Testimoni hanya dari pembeli asli <b>yang sudah setuju</b> fotonya dipajang.</p>
+  </div>
+
+  <div class="box note">
+    <h2><span class="n">4</span>Foto yang bagus</h2>
+    <ul>
+      <li>Siang hari, tempat terang, latar bersih.</li>
+      <li>Hewan utuh dari samping, setinggi badan hewan.</li>
+      <li>Paket aqiqah: foto masakan matang di wadah, rapi.</li>
+      <li>Qurban: hewan contoh untuk kelas itu, ada patokan ukuran (orang/kandang).</li>
+      <li>Foto langsung dari kamera HP, bukan tangkapan layar.</li>
+    </ul>
+  </div>
+
+  <div class="box">
+    <h2><span class="n">5</span>Urutan mengisi (sekali saja)</h2>
+    <ol>
+      <li>Harga + berat semua paket aqiqah (AQ-01, AQ-02).</li>
+      <li>Harga + berat qurban (QP-01…05, QK-01…05). Kelas yang tidak dijual: <code>sembunyikan QK-05</code>.</li>
+      <li>Stok kambing &amp; domba, lalu <code>tampilkan</code>.</li>
+      <li>Foto tiap kode (lihat kolom Foto).</li>
+      <li>3–6 foto galeri kegiatan.</li>
+      <li>Ketik <code>stok</code>, lalu cek website untuk memastikan semuanya tampil.</li>
+    </ol>
+  </div>
+</div>
+<footer><span>Barokah Farm · sejak 2004</span><span>Manual admin · hal. 3/3 · katalog website</span></footer>
+</div>
+
+</body></html>
