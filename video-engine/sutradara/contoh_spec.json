@@ -1,24 +1,214 @@
-{"id": "A1", "file": "BarokahFarm-20261020-01-Promo", "gaya": "komersial", "seed": 71,
- "musik": {"gaya": "akustik", "seed": 21, "bpm": 104, "drop": 11.0},
- "intro_logo": {"dur": 1.7},
+{
+ "id": "A1",
+ "file": "BarokahFarm-20261020-01-Promo",
+ "gaya": "komersial",
+ "seed": 71,
+ "musik": {
+  "gaya": "akustik",
+  "seed": 21,
+  "bpm": 104,
+  "drop": 11.0
+ },
+ "intro_logo": {
+  "dur": 1.7
+ },
  "bagian": [
-  {"jenis": "broll", "suara": 0, "klip": [{"src": "<KLIP_BROLL_A>", "in": 2.2, "dur": 2.9, "ramp": {"cepat": 2.0, "lambat": 0.5, "titik": 0.3}, "z0": 1.12, "z1": 1.0, "bebas": true}],
-   "teks": [{"kind": "judul", "at": 1.0, "dur": 1.9, "teks": "Barokah Farm", "sub2": "Kambing & domba · Curug, Tangerang"}]},
-  {"jenis": "bicara", "src": "<KLIP_BICARA_1>", "in": 0.4, "out": 8.45, "rapat": 0.4,
-   "sisip": [{"pada": "kambing", "dur": 1.25, "src": "<KLIP_BROLL_B>", "in": 0.4}],
-   "teks": [{"kind": "lower", "pada": "Barokah", "dur": 3.6, "teks": "Barokah Farm | Peternakan kambing & domba sejak 2004"}]},
-  {"jenis": "broll", "suara": 0, "transisi": ["whip", 0.2], "klip": [
-    {"src": "<KLIP_BROLL_B>", "in": 10.2, "dur": 1.15},
-    {"src": "<KLIP_BROLL_C>", "in": 16.4, "dur": 1.15, "ramp": {"cepat": 1.0, "lambat": 0.5, "titik": 0.01}},
-    {"src": "<KLIP_BROLL_D>", "in": 0.2, "dur": 1.15, "kf": [[0, 1.0], [0.6, 1.0], [1.15, 1.12]]}]},
-  {"jenis": "bicara", "src": "<KLIP_BICARA_2>", "in": 0.0, "out": 11.25, "rapat": 0.4, "buang": [[6.1, 7.4]],
-   "kata": [{"pada": "berkualitas", "dur": 1.6, "teks": "Berkualitas"}],
-   "sisip": [{"pada": "sehat", "dur": 1.0, "src": "<KLIP_BROLL_E>", "in": 0.5}]},
-  {"jenis": "broll", "suara": 0, "transisi": ["whip", 0.2], "klip": [
-    {"src": "<KLIP_BROLL_F>", "in": 0.4, "dur": 1.75}, {"src": "<KLIP_BROLL_B>", "in": 21.0, "dur": 1.75}, {"src": "<KLIP_BROLL_C>", "in": 21.2, "dur": 1.75}],
-   "teks": [{"kind": "kunci", "at": 0.15, "dur": 1.55, "teks": "Gratis ongkir", "sub2": "se-Jabodetabek"},
-            {"kind": "kunci", "at": 1.9, "dur": 1.55, "teks": "DP mulai Rp100rb", "sub2": "per ekor"},
-            {"kind": "kunci", "at": 3.65, "dur": 1.6, "teks": "Pilih di katalog", "sub2": "barokahfarm.pages.dev"}]},
-  {"jenis": "bicara", "src": "<KLIP_BICARA_3>", "in": 2.72, "out": 11.2, "rapat": 0.45},
-  {"jenis": "penutup", "src": "<KLIP_BROLL_A>", "in": 7.0, "dur": 3.4}],
- "penutup": {"judul": "Barokah Farm", "sub": "Kambing · Domba · Aqiqah · Qurban"}}
+  {
+   "jenis": "broll",
+   "suara": 0,
+   "klip": [
+    {
+     "src": "<KLIP_BROLL_A>",
+     "in": 2.2,
+     "dur": 2.9,
+     "ramp": {
+      "cepat": 2.0,
+      "lambat": 0.5,
+      "titik": 0.3
+     },
+     "z0": 1.12,
+     "z1": 1.0,
+     "bebas": true
+    }
+   ],
+   "teks": [
+    {
+     "kind": "judul",
+     "at": 1.0,
+     "dur": 1.9,
+     "teks": "Barokah Farm",
+     "sub2": "Kambing & domba · Curug, Tangerang"
+    }
+   ]
+  },
+  {
+   "jenis": "bicara",
+   "src": "<KLIP_BICARA_1>",
+   "in": 0.4,
+   "out": 8.45,
+   "rapat": 0.4,
+   "sisip": [
+    {
+     "pada": "kambing",
+     "dur": 1.25,
+     "src": "<KLIP_BROLL_B>",
+     "in": 0.4
+    }
+   ],
+   "teks": [
+    {
+     "kind": "lower",
+     "pada": "Barokah",
+     "dur": 3.6,
+     "teks": "Barokah Farm | Peternakan kambing & domba sejak 2004"
+    }
+   ]
+  },
+  {
+   "jenis": "broll",
+   "suara": 0,
+   "transisi": [
+    "whip",
+    0.2
+   ],
+   "klip": [
+    {
+     "src": "<KLIP_BROLL_B>",
+     "in": 10.2,
+     "dur": 1.15
+    },
+    {
+     "src": "<KLIP_BROLL_C>",
+     "in": 16.4,
+     "dur": 1.15,
+     "ramp": {
+      "cepat": 1.0,
+      "lambat": 0.5,
+      "titik": 0.01
+     }
+    },
+    {
+     "src": "<KLIP_BROLL_D>",
+     "in": 0.2,
+     "dur": 1.15,
+     "kf": [
+      [
+       0,
+       1.0
+      ],
+      [
+       0.6,
+       1.0
+      ],
+      [
+       1.15,
+       1.12
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "jenis": "bicara",
+   "src": "<KLIP_BICARA_2>",
+   "in": 0.0,
+   "out": 11.25,
+   "rapat": 0.4,
+   "buang": [
+    [
+     6.1,
+     7.4
+    ]
+   ],
+   "kata": [
+    {
+     "pada": "berkualitas",
+     "dur": 1.6,
+     "teks": "Berkualitas"
+    }
+   ],
+   "sisip": [
+    {
+     "pada": "sehat",
+     "dur": 1.0,
+     "src": "<KLIP_BROLL_E>",
+     "in": 0.5
+    }
+   ]
+  },
+  {
+   "jenis": "broll",
+   "suara": 0,
+   "transisi": [
+    "whip",
+    0.2
+   ],
+   "klip": [
+    {
+     "src": "<KLIP_BROLL_F>",
+     "in": 0.4,
+     "dur": 1.75
+    },
+    {
+     "src": "<KLIP_BROLL_B>",
+     "in": 21.0,
+     "dur": 1.75
+    },
+    {
+     "src": "<KLIP_BROLL_C>",
+     "in": 21.2,
+     "dur": 1.75
+    }
+   ],
+   "teks": [
+    {
+     "kind": "kunci",
+     "at": 0.15,
+     "dur": 1.55,
+     "teks": "Gratis ongkir",
+     "sub2": "se-Jabodetabek"
+    },
+    {
+     "kind": "kunci",
+     "at": 1.9,
+     "dur": 1.55,
+     "teks": "DP mulai Rp100rb",
+     "sub2": "per ekor"
+    },
+    {
+     "kind": "kunci",
+     "at": 3.65,
+     "dur": 1.6,
+     "teks": "Pilih di katalog",
+     "sub2": "barokahfarm.pages.dev"
+    }
+   ]
+  },
+  {
+   "jenis": "bicara",
+   "src": "<KLIP_BICARA_3>",
+   "in": 2.72,
+   "out": 11.2,
+   "rapat": 0.45
+  },
+  {
+   "jenis": "penutup",
+   "src": "<KLIP_BROLL_A>",
+   "in": 7.0,
+   "dur": 3.4
+  }
+ ],
+ "penutup": {
+  "judul": "Barokah Farm",
+  "sub": "Kambing · Domba · Aqiqah · Qurban"
+ },
+ "judul": "Kambing sehat siap aqiqah dari Barokah Farm",
+ "caption": "Cari kambing sehat buat aqiqah? Di Barokah Farm semua hewan dirawat langsung di kandang kami di Curug. Cek pilihan dan harganya di barokahfarm.pages.dev atau chat WA 0878-9014-0532 ya!",
+ "hashtag": [
+  "#barokahfarm",
+  "#kambingaqiqah",
+  "#aqiqah",
+  "#kambing",
+  "#tangerang"
+ ]
+}

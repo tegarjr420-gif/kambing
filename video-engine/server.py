@@ -1,9 +1,9 @@
 # Server mesin video Barokah Farm (Railway). Cek folder mentahan berkala, jalankan alur otomatis, sediakan status & unduhan.
-import os, json, threading, time, glob, urllib.parse, traceback
+import os, re, json, threading, time, glob, shutil, urllib.parse, traceback
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import pipeline
 
-VERSI = '2026-10-20.3'
+VERSI = '2026-10-20.4'
 KEY = os.environ.get('ENGINE_KEY', '')
 MENIT = float(os.environ.get('CEK_MENIT', '20'))
 TERAKHIR = {'cek': None, 'hasil': None}
@@ -35,9 +35,37 @@ class H(BaseHTTPRequestHandler):
         s.send_response(code); s.send_header('Content-Type', ctype); s.send_header('Content-Length', str(len(b))); s.end_headers(); s.wfile.write(b)
     def boleh(s, q): return KEY and (q.get('k', [''])[0] == KEY or s.headers.get('X-Kunci') == KEY)
     def log_message(s, *a): pass
+    def media(s, kepala_saja=False):
+        # video Drive untuk diambil Buffer (dialirkan langsung, tidak disimpan di server); dilindungi token per file
+        import posting, requests as rq, hmac
+        u = urllib.parse.urlparse(s.path); q = urllib.parse.parse_qs(u.query)
+        fid = os.path.basename(u.path)[:-4]
+        if not hmac.compare_digest(q.get('t', [''])[0], posting.token(fid)): return s.kirim(403, dict(ok=False))
+        h = {'Range': s.headers['Range']} if s.headers.get('Range') else {}
+        r = rq.get(f'https://drive.usercontent.google.com/download?id={fid}&export=download&confirm=t', headers=h, stream=True, timeout=120)
+        if r.status_code >= 400 or 'text/html' in r.headers.get('Content-Type', ''): r.close(); return s.kirim(404, dict(ok=False))
+        s.send_response(r.status_code); s.send_header('Content-Type', 'video/mp4'); s.send_header('Accept-Ranges', 'bytes')
+        for k in ('Content-Length', 'Content-Range'):
+            if r.headers.get(k): s.send_header(k, r.headers[k])
+        s.end_headers()
+        if kepala_saja: r.close(); return
+        try:
+            for ch in r.iter_content(1 << 20): s.wfile.write(ch)
+        except (BrokenPipeError, ConnectionResetError): pass
+        finally: r.close()
+    def do_HEAD(s):
+        u = urllib.parse.urlparse(s.path)
+        if u.path.startswith('/media/') and u.path.endswith('.mp4'): return s.media(True)
+        s.send_response(404); s.end_headers()
     def do_GET(s):
         u = urllib.parse.urlparse(s.path); q = urllib.parse.parse_qs(u.query)
-        if u.path in ('/cek', '/uji-ai', '/uji-wa', '/uji-drive', '/ulang'): return s.do_POST()
+        if u.path.startswith('/media/') and u.path.endswith('.mp4'): return s.media()
+        if u.path.startswith('/berkas/') and u.path.endswith('.pdf'):
+            import skrip
+            p = f'{skrip.BERKAS}/{os.path.basename(u.path)}'
+            if not re.fullmatch(r'[\w-]{20,40}\.pdf', os.path.basename(u.path)) or not os.path.exists(p): return s.kirim(404, dict(ok=False))
+            return s.kirim(200, open(p, 'rb').read(), 'application/pdf')
+        if u.path in ('/cek', '/uji-ai', '/uji-wa', '/uji-drive', '/ulang', '/skrip', '/posting/selesai', '/posting/status', '/hapus-tugas', '/skrip-status'): return s.do_POST()
         if u.path in ('/', '/sehat'):
             return s.kirim(200, dict(ok=True, versi=VERSI, sibuk=pipeline.SEKARANG['tugas'], cek_terakhir=TERAKHIR))
         if not s.boleh(q): return s.kirim(403, dict(ok=False, galat='kunci'))
@@ -90,6 +118,17 @@ class H(BaseHTTPRequestHandler):
             import subprocess
             return s.kirim(200, dict(ps=subprocess.run(['ps', '-eo', 'pid,ppid,etime,pcpu,rss,args', '--sort=-pcpu'], capture_output=True, text=True).stdout[:6000],
                                      df=subprocess.run(['df', '-h', pipeline.DATA], capture_output=True, text=True).stdout))
+        if u.path == '/posting/ambil':
+            import posting
+            try: return s.kirim(200, posting.ambil(int(q.get('jeda_hari', ['3'])[0]), q.get('paksa', ['0'])[0] == '1'))
+            except Exception as e: return s.kirim(200, dict(jadwal=False, ada=False, galat=str(e)[:300]))
+        if u.path == '/posting/cek':
+            import posting
+            return s.kirim(200, dict(daftar=posting.perlu_cek_status()))
+        if u.path == '/stok':
+            import posting
+            try: return s.kirim(200, dict(stok=[dict(nama=f['nama'], id=f['id']) for f in posting.daftar_stok()]))
+            except Exception as e: return s.kirim(200, dict(galat=str(e)[:300]))
         if u.path == '/naskah':
             jid = q.get('tugas', [''])[0]; p = f'{pipeline.DATA}/tugas/{os.path.basename(jid)}/naskah.json'
             return s.kirim(200, json.load(open(p))) if os.path.exists(p) else s.kirim(404, dict(ok=False))
@@ -112,6 +151,29 @@ class H(BaseHTTPRequestHandler):
                 return s.kirim(200, dict(ok=True, jawab=out[:300], token=use))
             except Exception as e:
                 return s.kirim(200, dict(ok=False, galat=str(e)[:500]))
+        if u.path == '/posting/selesai':  # dipanggil n8n setelah kirim ke Buffer
+            import posting
+            n = int(s.headers.get('Content-Length') or 0); body = json.loads(s.rfile.read(n) or b'{}') if n else {}
+            fid = body.get('id') or q.get('id', [''])[0]
+            return s.kirim(200, posting.selesai(fid, body.get('nama') or q.get('nama', [''])[0], body.get('hasil') or []))
+        if u.path == '/posting/status':
+            import posting
+            posting.catat_status(q.get('id', [''])[0], q.get('post', [''])[0], q.get('status', [''])[0], q.get('tautan', [''])[0], q.get('pesan', [''])[0])
+            return s.kirim(200, dict(ok=True))
+        if u.path == '/skrip':  # admin minta script mentahan lewat WA -> PDF dikirim balik ke chat itu
+            import skrip
+            n = int(s.headers.get('Content-Length') or 0); body = json.loads(s.rfile.read(n) or b'{}') if n else {}
+            chat = body.get('chat_id') or q.get('chat', [''])[0]
+            if not chat: return s.kirim(400, dict(ok=False, galat='chat_id kosong'))
+            skrip.mulai(chat, body.get('permintaan') or q.get('permintaan', [''])[0], str(body.get('tes', q.get('tes', ['0'])[0])).lower() in ('1', 'true'))
+            return s.kirim(200, dict(ok=True, mulai=True))
+        if u.path == '/skrip-status':
+            import skrip
+            return s.kirim(200, dict(status=skrip.STATUS))
+        if u.path == '/hapus-tugas':  # bersihkan data tugas lama di server (mentahan/cache/video)
+            jid = os.path.basename(q.get('tugas', [''])[0]); d = f'{pipeline.DATA}/tugas/{jid}'
+            if not jid or not os.path.isdir(d) or pipeline.SEKARANG['tugas'] == jid: return s.kirim(404, dict(ok=False))
+            shutil.rmtree(d, ignore_errors=True); return s.kirim(200, dict(ok=True, dihapus=jid))
         if u.path == '/uji-wa':
             pipeline.lapor_wa(q.get('teks', ['🔧 Tes dari mesin video Barokah Farm.'])[0]); return s.kirim(200, dict(ok=True))
         if u.path == '/uji-drive':

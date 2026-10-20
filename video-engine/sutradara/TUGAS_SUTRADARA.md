@@ -8,7 +8,7 @@ Tugasmu HANYA menulis **naskah edit JSON** untuk mesin render. Kamu tidak merend
 - Jangan pakai klip penyembelihan/darah. Jangan mengarang harga, testimoni, sertifikasi, atau klaim.
 - Fakta yang boleh dipakai: DP mulai Rp100.000 per ekor, gratis ongkir se-Jabodetabek (syarat jarak), katalog barokahfarm.pages.dev, WA 0878-9014-0532, berdiri 2004, owner Bpk. Muri.
 - Bila ucapan narasumber bertentangan dengan fakta di atas, buang kalimat itu (pakai "buang") dan laporkan di "catatan".
-- Satu momen sumber hanya dipakai di satu video.
+- Momen sumber boleh dipakai ulang di video lain (maks 2 video) asal tampil berbeda (potongan, urutan, hook, gaya, teks). Jangan ada dua video yang terasa sama.
 
 ## Komponen mesin yang bisa kamu panggil
 | Komponen | Kunci JSON |

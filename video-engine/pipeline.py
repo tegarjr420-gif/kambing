@@ -1,5 +1,7 @@
-# Alur otomatis: Drive "1. Video Mentah" -> unduh -> hapus mentahan di Drive -> analisa -> sutradara -> render -> cek
-#               -> unggah ke "2. Video Jadi/<tanggal>" -> lapor WhatsApp admin (minta mentahan baru).
+# Alur otomatis: Drive "1. Video Mentah" -> unduh -> analisa -> sutradara (Claude) -> render -> cek
+#   -> unggah ke "2. Video Jadi" -> pastikan semua video ada di Drive -> baru hapus mentahan di Drive
+#   + semua data tugas di server (mentahan, analisa, cache, salinan QC) -> lapor WhatsApp admin.
+# Video di "2. Video Jadi" diambil satu per satu oleh autopost (n8n + Buffer), lihat posting.py.
 import os, sys, json, time, re, shutil, subprocess, threading, traceback, datetime, glob
 import requests
 
@@ -21,11 +23,12 @@ def sudah_diproses():
 def tandai(fid):
     s = sudah_diproses(); s.add(fid); os.makedirs(DATA, exist_ok=True); json.dump(sorted(s), open(f'{DATA}/sudah.json', 'w'))
 
-def lapor_wa(teks, log=print):
+def lapor_wa(teks, log=print, **ekstra):
+    """kirim ke WA admin lewat n8n; ekstra: chat_id (satu nomor saja), berkas_url + berkas_nama (kirim file)"""
     url = os.environ.get('LAPOR_URL')
     if not url: log('(lapor WA dilewati: LAPOR_URL kosong)'); return
     try:
-        r = requests.post(url, json={'kunci': os.environ.get('GEMINI_PROXY_KEY', ''), 'teks': teks}, timeout=60)
+        r = requests.post(url, json=dict(kunci=os.environ.get('GEMINI_PROXY_KEY', ''), teks=teks, **ekstra), timeout=60)
         log(f'lapor WA: {r.status_code}')
     except Exception as e:
         log(f'lapor WA gagal: {e}')
@@ -94,7 +97,7 @@ def t_sutradara(T, K):
     p = f'{T.dir}/naskah.json'
     if os.path.exists(p):
         J = json.load(open(p)); return J['video'], J.get('catatan', ''), J.get('sumber', '?')
-    info = dict(tanggal=now().strftime('%Y%m%d'), ana=f'{T.dir}/ana', kerja=T.dir)
+    info = dict(tanggal=T.id, ana=f'{T.dir}/ana', kerja=T.dir)
     specs, catatan, sumber = sutradara.tulis(K, info, log=T.log)
     json.dump(dict(video=specs, catatan=catatan, sumber=sumber), open(p, 'w'), ensure_ascii=False, indent=1)
     T.log(f'{len(specs)} naskah dari {sumber}. Catatan: {str(catatan)[:500]}')
@@ -161,22 +164,58 @@ def salin_qc(T, path, nama):
         T.log(f'salinan QC gagal: {e}')
 
 def t_unggah(T, hasil):
+    """unggah langsung ke folder "2. Video Jadi" (tanpa sub-folder) agar autopost mudah mengambil satu per satu"""
     T.tahap('unggah')
     if not jembatan.ada():
-        T.log('jembatan Drive belum dipasang: video jadi disimpan di server saja'); return None
-    nama = now().strftime('%Y-%m-%d %H.%M') + f' ({len(hasil)} video)'
-    if not T.st.get('folder_jadi'):
-        fj = jembatan.folder(nama, bagikan=True); T.st['folder_jadi'] = fj; T.simpan()
-    fj = T.st['folder_jadi']
+        T.log('jembatan Drive belum dipasang: video jadi disimpan di server saja'); return False
     for v in hasil:
-        if v.get('url'): continue
+        if v.get('drive_id'): continue
         for coba in range(3):
             try:
-                r = jembatan.unggah(v['file'], fj['id']); v['url'] = r['url']; T.log(f"unggah {os.path.basename(v['file'])} ok"); break
+                r = jembatan.unggah(v['file'], jembatan.JADI()); v['url'] = r['url']; v['drive_id'] = r['id']
+                T.log(f"unggah {os.path.basename(v['file'])} ok"); break
             except Exception as e:
                 T.log(f'  unggah gagal ({coba + 1}): {e}'); time.sleep(10)
         T.st['video'] = hasil; T.simpan()
-    return fj
+    return True
+
+def t_verifikasi(T, hasil):
+    """pastikan SEMUA video benar-benar ada di Drive dengan ukuran yang sama sebelum apa pun dihapus"""
+    T.tahap('verifikasi')
+    try:
+        ada = {f['id']: f for f in jembatan.panggil('daftar', folder=jembatan.JADI())['file']}
+    except Exception as e:
+        T.log(f'verifikasi gagal membaca Drive: {e}'); return False
+    ok = True
+    for v in hasil:
+        f = ada.get(v.get('drive_id'))
+        if not f or int(f.get('ukuran') or 0) != os.path.getsize(v['file']):
+            T.log(f"  BELUM ADA di Drive: {os.path.basename(v['file'])}"); ok = False
+    T.log('semua video terverifikasi di Drive' if ok else 'verifikasi GAGAL: data tidak dihapus')
+    return ok
+
+def simpan_caption(T, specs, hasil):
+    import posting
+    by_file = {f"{T.dir}/out/{sp['file']}.mp4": sp for sp in specs}
+    for v in hasil:
+        sp = by_file.get(v['file'], {})
+        if v.get('drive_id'):
+            posting.simpan_caption(v['drive_id'], dict(nama=os.path.basename(v['file']), judul=sp.get('judul', ''), caption=sp.get('caption', ''),
+                                                       hashtag=sp.get('hashtag', []), gaya=v.get('gaya'), durasi=v.get('durasi'), tugas=T.id))
+
+def hapus_qc(T):
+    url, key = os.environ.get('QC_STORAGE_URL'), os.environ.get('QC_STORAGE_KEY')
+    if not url or not key: return
+    try:
+        base, ember_path = url.split('/object/', 1)
+        ember, awal = ember_path.split('/', 1)
+        h = {'apikey': key, 'Authorization': f'Bearer {key}'}
+        r = requests.post(f'{base}/object/list/{ember}', json={'prefix': f'{awal}/{T.id}/', 'limit': 1000}, headers=h, timeout=60)
+        nama = [f"{awal}/{T.id}/{o['name']}" for o in r.json()] if r.ok else []
+        if nama: requests.delete(f'{base}/object/{ember}', json={'prefixes': nama}, headers=h, timeout=60)
+        T.log(f'salinan QC dihapus: {len(nama)} file')
+    except Exception as e:
+        T.log(f'hapus salinan QC gagal: {e}')
 
 def judul_dari(file): return re.sub(r'^BarokahFarm-\d+-\d+-', '', os.path.basename(file)[:-4]).replace('-', ' ')
 
@@ -195,7 +234,6 @@ def jalankan(files, jid=None, uji=False):
         if baru:
             menit = 20 + 6 * len(T.st['file'])
             lapor_wa(awal + f"🎬 *Mentahan diterima*: {len(T.st['file'])} video. Mesin sedang mengedit, perkiraan selesai ±{menit} menit. Hasilnya nanti dikirim ke sini.", T.log)
-        t_hapus_drive(T)
         K = t_analisa(T)
         import sutradara
         try:
@@ -209,13 +247,22 @@ def jalankan(files, jid=None, uji=False):
                 lapor_wa(awal + '⚠️ AI sutradara (Claude) tidak bisa dipakai lebih dari 24 jam, editing belum bisa dibuat. Cek saldo & batas di platform.claude.com.', T.log)
                 T.tahap('gagal'); return T
             T.tahap('tunggu_ai'); T.log('ditunda: menunggu AI sutradara, dicoba lagi', T.st['tunda_sampai']); return T
-        if not specs: T.tahap('gagal'); lapor_wa('⚠️ Mesin video tidak bisa menyusun video dari mentahan terakhir (bahan kurang/rusak). Mohon kirim mentahan lain.', T.log); return T
-        hasil = [cek_video(T, v) for v in t_render(T, specs)]
-        T.st['video'] = hasil; T.simpan()
-        for v in hasil: salin_qc(T, v['file'], os.path.basename(v['file']))
-        for p in [f'{T.dir}/naskah.json', f'{T.dir}/log.txt', f'{T.dir}/ana/klip.json']:
-            if os.path.exists(p): salin_qc(T, p, os.path.basename(p) + '.txt')
-        fj = t_unggah(T, hasil)
+        if not specs: T.tahap('gagal'); lapor_wa('⚠️ Mesin video tidak bisa menyusun video dari mentahan terakhir (bahan kurang/rusak). Mentahan TIDAK dihapus dari Drive. Mohon cek atau kirim mentahan lain.', T.log); return T
+        if not T.st.get('video'):
+            hasil = [cek_video(T, v) for v in t_render(T, specs)]
+            if not hasil: T.tahap('gagal'); lapor_wa('⚠️ Semua video gagal dirender. Mentahan TIDAK dihapus dari Drive; mesin akan dicek.', T.log); return T
+            T.st['video'] = hasil; T.simpan()
+            for v in hasil: salin_qc(T, v['file'], os.path.basename(v['file']))
+        hasil = T.st['video']
+        if not t_unggah(T, hasil) or not t_verifikasi(T, hasil):
+            T.st['gagal_unggah'] = T.st.get('gagal_unggah', 0) + 1; T.tahap('unggah_gagal')
+            if T.st['gagal_unggah'] in (1, 3):
+                lapor_wa(awal + '⚠️ Video sudah jadi tetapi BELUM berhasil masuk ke Drive. Mentahan dan data TIDAK dihapus; mesin mencoba unggah lagi otomatis.', T.log)
+            return T
+        simpan_caption(T, specs, hasil)
+        t_hapus_drive(T)
+        import posting
+        stok = posting.stok_aman()
         baris = []
         for i, v in enumerate(hasil, 1):
             b = f"{i}. *{judul_dari(v['file'])}* ({v['gaya']}, {v['durasi']:.0f} dtk)"
@@ -223,25 +270,39 @@ def jalankan(files, jid=None, uji=False):
             if v['masalah']: b += f"\n   ⚠️ {', '.join(v['masalah'])}"
             baris.append(b)
         dihapus = sum(1 for f in T.st['file'].values() if f.get('dihapus'))
-        teks = awal + (f"✅ *{len(hasil)} video Barokah Farm siap dicek*\n\n" + '\n'.join(baris) +
-                (f"\n\n📁 Semua video: {fj['url']}" if fj else '') +
-                (f"\n\n🗑️ {dihapus} mentahan sudah dihapus dari Drive." if dihapus else '') +
-                "\n📥 Silakan kirim *mentahan baru* ke folder *1. Video Mentah* di Drive (rekam potrait, stabil, suara dekat).")
+        teks = awal + (f"✅ *{len(hasil)} video baru masuk folder 2. Video Jadi*\n\n" + '\n'.join(baris) +
+                (f"\n\n📦 Stok video siap posting sekarang: *{stok}* (autopost 1 video tiap 3 hari)." if stok is not None else '') +
+                (f"\n🗑️ {dihapus} mentahan sudah dihapus dari Drive, data di server dibersihkan." if dihapus else '') +
+                "\n\nTonton dulu; video yang tidak layak cukup dipindah keluar dari folder 2. Video Jadi agar tidak ikut diposting.")
         if sumber not in ('gemini', 'claude', 'manual'): teks += '\n\nℹ️ Video kali ini disusun TANPA AI, jadi isinya belum disaring. Mohon tonton dulu sebelum diposting.'
         lapor_wa(teks, T.log)
         T.tahap('selesai'); T.st['selesai'] = now().isoformat(); T.simpan()
-        shutil.rmtree(f'{T.dir}/cache', ignore_errors=True); shutil.rmtree(f'{T.dir}/ana/wav', ignore_errors=True)
+        bersihkan_tugas(T)
         return T
     except Exception:
         T.log('ERROR\n' + traceback.format_exc()); T.st['tahap_error'] = T.st.get('tahap'); T.tahap('error'); return T
     finally:
         SEKARANG['tugas'] = None; KUNCI.release()
 
-def bersih_lama(hari=4):
+def bersihkan_tugas(T):
+    """hapus SEMUA data tugas di server (mentahan, analisa, cache, video) + salinan QC; sisakan ringkasan kecil"""
+    if not all(f.get('dihapus') for f in T.st['file'].values()):
+        T.log('sebagian mentahan belum terhapus dari Drive; data server tetap dibersihkan (mentahan di Drive tidak akan diambil ulang)')
+    hapus_qc(T)
+    ringkas = dict(id=T.id, selesai=T.st.get('selesai'), file=len(T.st['file']),
+                   video=[dict(nama=os.path.basename(v['file']), drive_id=v.get('drive_id'), durasi=v.get('durasi')) for v in T.st.get('video', [])])
+    os.makedirs(f'{DATA}/riwayat', exist_ok=True)
+    json.dump(ringkas, open(f'{DATA}/riwayat/{T.id}.json', 'w'), ensure_ascii=False)
+    log = open(f'{T.dir}/log.txt').read() if os.path.exists(f'{T.dir}/log.txt') else ''
+    open(f'{DATA}/riwayat/{T.id}.log', 'w').write(log[-20000:])
+    shutil.rmtree(T.dir, ignore_errors=True)
+    print(f'[{T.id}] data tugas di server dihapus', flush=True)
+
+def bersih_lama(hari=3):
     for d in glob.glob(f'{DATA}/tugas/*'):
         try:
             st = json.load(open(f'{d}/status.json'))
-            if st.get('tahap') == 'selesai' and time.time() - os.path.getmtime(f'{d}/status.json') > hari * 86400: shutil.rmtree(d)
+            if st.get('tahap') in ('selesai', 'gagal', 'error') and time.time() - os.path.getmtime(f'{d}/status.json') > hari * 86400: shutil.rmtree(d)
         except Exception: pass
 
 def belum_tuntas():
@@ -251,6 +312,7 @@ def belum_tuntas():
             if st.get('tahap') == 'tunggu_ai':
                 if now().isoformat() >= st.get('tunda_sampai', ''): return os.path.basename(d), st
                 continue
+            if st.get('tahap') == 'unggah_gagal' and st.get('gagal_unggah', 0) < 6: return os.path.basename(d), st
             if st.get('tahap') not in ('selesai', 'gagal') and st.get('file') and st.get('ulang', 0) < 2:
                 return os.path.basename(d), st
         except Exception: pass
@@ -261,7 +323,7 @@ def cek(log=print, tenang_menit=None, uji=False):
     if KUNCI.locked(): return 'sibuk'
     jid, st = belum_tuntas()
     if jid:
-        if st.get('tahap') != 'tunggu_ai': st['ulang'] = st.get('ulang', 0) + 1
+        if st.get('tahap') not in ('tunggu_ai', 'unggah_gagal'): st['ulang'] = st.get('ulang', 0) + 1
         json.dump(st, open(f'{DATA}/tugas/{jid}/status.json', 'w'))
         threading.Thread(target=jalankan, args=([], jid), daemon=True).start(); return f'lanjut {jid}'
     lama = sudah_diproses()

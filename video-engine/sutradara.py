@@ -72,7 +72,7 @@ Musik (dibuat mesin, aman hak cipta): {', '.join(MUSIK)}. Transisi: {', '.join(T
 - Jangan isi koordinat "y" kecuali perlu; mesin otomatis menaruh tulisan di area kosong yang tidak menutupi wajah.
 - Durasi tiap video 20–50 detik. Tiap video diakhiri bagian "penutup" (1 klip B-roll tenang, dur 3–3.6).
 - Klip yang CATATAN-nya "sangat goyang", "gelap", atau "buram" hanya boleh dipakai sebentar (≤1.2 dtk) atau tidak dipakai.
-- Satu momen sumber (rentang waktu yang sama dari klip yang sama) hanya boleh muncul di satu video.
+- Momen sumber BOLEH dipakai ulang di video lain (maksimal 2 video per momen), asal tiap video tampil berbeda: hook pembuka, urutan, potongan, gaya, teks, dan sudut cerita berbeda. Jangan ada dua video yang terasa sama.
 - Abaikan hitungan aba-aba (\"1, 2, 3\", \"oke\", \"action\") dan bagian sebelum orang mulai bicara; 'in' dimulai tepat sebelum kata pertama kalimat.
 - Teks layar singkat (≤ 4 kata per baris), bahasa Indonesia santai, tidak alay, tanpa emoji.
 - "file": "BarokahFarm-{info['tanggal']}-<no>-<Judul-Singkat>" tanpa spasi. "id": "A1", "A2", dst.
@@ -86,7 +86,19 @@ Musik (dibuat mesin, aman hak cipta): {', '.join(MUSIK)}. Transisi: {', '.join(T
 
 ## Yang harus kamu keluarkan
 JSON saja: {{"video": [<naskah 1>, <naskah 2>, ...], "catatan": "<ringkasan pilihan editing, klip yang tidak dipakai beserta alasannya, risiko>"}}
-Buat sebanyak mungkin video BAGUS dari bahan ini (1–6 video), tiap video punya tujuan berbeda (promo, edukasi, kenalan, testimoni suasana, dll.). Maksimalkan pemakaian momen yang bagus, tapi kualitas lebih penting dari jumlah."""
+MAKSIMALKAN bahan: video ini dipakai untuk autopost berkala, jadi buat sebanyak mungkin video yang layak posting.
+Target sekitar {target_video(K)} video (boleh sedikit lebih atau kurang sesuai kualitas bahan, maksimal 12). Tiap video punya tujuan/sudut berbeda
+(promo, edukasi, kenalan, suasana kandang, reseller, aqiqah, qurban, tips memilih hewan, dll.). Kualitas tetap nomor satu: jangan isi video dengan klip jelek.
+
+Tiap naskah video WAJIB punya 3 kunci tambahan untuk posting media sosial:
+- "caption": 2–4 kalimat bahasa Indonesia santai untuk TikTok/Instagram/Facebook: kalimat pembuka yang memancing, isi singkat sesuai video, ajakan (cek katalog barokahfarm.pages.dev atau chat WA 0878-9014-0532). Boleh 1–2 emoji. Hanya fakta yang diizinkan.
+- "hashtag": 5–8 tagar relevan, contoh ["#barokahfarm", "#kambing", "#aqiqah", "#tangerang"].
+- "judul": judul pendek ≤ 70 karakter (dipakai sebagai judul TikTok)."""
+
+def target_video(K):
+    layak = [k for k in K.values() if k and not k.get('rusak')]
+    bicara = sum(1 for k in layak if k.get('detik_ucapan', 0) >= 2)
+    return max(2, min(12, round(len(layak) / 2), bicara * 2 + 2))
 
 def panggil_gemini(teks, gambar, model=None, timeout=600):
     url = os.environ.get('GEMINI_PROXY_URL'); kunci = os.environ.get('GEMINI_PROXY_KEY', '')
@@ -150,7 +162,7 @@ def panggil_claude(teks, gambar, timeout=900):
         content.append({'type': 'text', 'text': f'Contact sheet klip {nama}:'})
         content.append({'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': _kecilkan(p)}})
     content.append({'type': 'text', 'text': teks + '\n\nKeluarkan HANYA objek JSON valid, tanpa teks lain, tanpa ```.'})
-    body = {'model': os.environ.get('CLAUDE_MODEL', 'claude-sonnet-5-5'), 'max_tokens': int(os.environ.get('CLAUDE_MAX_TOKENS', '24000')),
+    body = {'model': os.environ.get('CLAUDE_MODEL', 'claude-sonnet-5-5'), 'max_tokens': int(os.environ.get('CLAUDE_MAX_TOKENS', '40000')),
             'messages': [{'role': 'user', 'content': content}]}
     r = requests.post('https://api.anthropic.com/v1/messages', json=body, timeout=timeout,
                       headers={'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'})
@@ -242,6 +254,12 @@ def periksa(spec, K, no, info):
         if br: bag.append({'jenis': 'penutup', 'src': br[no % len(br)], 'in': 1.0, 'dur': 3.4})
     spec['bagian'] = bag
     spec.setdefault('penutup', {'judul': 'Barokah Farm', 'sub': 'Kambing · Domba · Aqiqah · Qurban'})
+    spec['caption'] = str(spec.get('caption') or '').strip()[:1500]
+    tg = spec.get('hashtag') or []
+    if isinstance(tg, str): tg = tg.split()
+    tg = ['#' + re.sub(r'[^0-9A-Za-z_]', '', str(t).lstrip('#')) for t in tg][:8]
+    spec['hashtag'] = [t for t in tg if len(t) > 1] or ['#barokahfarm', '#kambing', '#domba', '#aqiqah', '#qurban']
+    spec['judul'] = str(spec.get('judul') or judul.replace('-', ' ')).strip()[:80]
     # uji cepat: susun timeline (tanpa render)
     p = f"{info['kerja']}/spec_{spec['id']}.json"; json.dump(spec, open(p, 'w'), ensure_ascii=False, indent=1)
     r = subprocess.run([sys.executable, f'{E}/edit.py', p, '--timeline'], capture_output=True, text=True, env=dict(os.environ))
@@ -269,14 +287,16 @@ def tulis(K, info, log=print):
             log(f"sutradara {penyedia}: {len(J.get('video', []))} naskah ({time.time() - t0:.0f} dtk, token {use.get('totalTokenCount', '?')}"
                 + (f", biaya ${use['biaya_usd']}, hari ini ${use['biaya_hari_ini']}" if 'biaya_usd' in use else '') + ')')
             hasil = []; masalah = []
-            for i, sp in enumerate(J.get('video', [])[:6], 1):
+            semua = J.get('video', [])[:14]
+            for i, sp in enumerate(semua, 1):
                 sp2, mm = periksa(sp, K, len(hasil) + 1, info)
                 if mm and any(x.startswith(('mesin', 'durasi', 'tidak ada')) for x in mm):
                     masalah.append(f"video {i}: " + '; '.join(mm))
                 else:
                     hasil.append(sp2)
                     if mm: log(f'  naskah {i} diperbaiki otomatis: ' + '; '.join(mm))
-            if hasil and (not masalah or ditolak >= 1):
+            if hasil and (not masalah or ditolak >= 1 or len(hasil) >= max(2, 0.7 * len(semua))):
+                if masalah: log('  sebagian naskah dibuang: ' + '; '.join(masalah)[:400])
                 return hasil, J.get('catatan', ''), penyedia
             ditolak += 1
             if ditolak > 2: raise RuntimeError('naskah Gemini terus ditolak mesin')
