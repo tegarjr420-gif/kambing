@@ -65,7 +65,7 @@ class H(BaseHTTPRequestHandler):
             p = f'{skrip.BERKAS}/{os.path.basename(u.path)}'
             if not re.fullmatch(r'[\w-]{20,40}\.pdf', os.path.basename(u.path)) or not os.path.exists(p): return s.kirim(404, dict(ok=False))
             return s.kirim(200, open(p, 'rb').read(), 'application/pdf')
-        if u.path in ('/cek', '/uji-ai', '/uji-wa', '/uji-drive', '/ulang', '/skrip', '/posting/selesai', '/posting/status', '/hapus-tugas', '/skrip-status', '/dokumen-status'): return s.do_POST()
+        if u.path in ('/cek', '/uji-ai', '/uji-wa', '/uji-drive', '/ulang', '/skrip', '/posting/selesai', '/posting/status', '/hapus-tugas', '/skrip-status', '/dokumen-status', '/dokumen-uji'): return s.do_POST()
         if u.path in ('/', '/sehat'):
             return s.kirim(200, dict(ok=True, versi=VERSI, sibuk=pipeline.SEKARANG['tugas'], cek_terakhir=TERAKHIR))
         if not s.boleh(q): return s.kirim(403, dict(ok=False, galat='kunci'))
@@ -178,6 +178,15 @@ class H(BaseHTTPRequestHandler):
                 if not isinstance(body.get('laporan'), dict) or 'ringkas' not in body['laporan']: return s.kirim(400, dict(ok=False, galat='laporan tidak valid'))
                 dokumen.mulai(dokumen.kirim_rekap, body['laporan'], body.get('chat_id'), tes)
             return s.kirim(200, dict(ok=True, mulai=True))
+        if u.path == '/dokumen-uji':  # uji pembuatan PDF di server (tanpa kirim)
+            import dokumen
+            d = dict(no='INV/BF/UJI/0001', jenis='LUNAS', pesanan=0, sumber='online', tanggal='01/01/2026', jam='10.00',
+                     pelanggan=dict(nama='Uji', wa='62800'), item=dict(kode='K-01', nama='Kambing Jawa', jumlah=1),
+                     harga=1500000, ongkir=0, total=1500000, dp=100000, dibayar=1500000, pelunasan=1400000, sisa=0, rekening='BRI')
+            try:
+                tok, p = dokumen.pdf(dokumen.html_invoice(d), 'inv'); return s.kirim(200, dict(ok=True, url=dokumen.url_berkas(tok), ukuran=os.path.getsize(p)))
+            except Exception as e:
+                return s.kirim(200, dict(ok=False, galat=str(e)[:400]))
         if u.path == '/dokumen-status':
             import dokumen
             return s.kirim(200, dict(status=dokumen.STATUS))

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Buku Panduan Staf Kandang Barokah Farm</title><link rel="stylesheet" href="buku.css">
+<style>body{font-size:13pt} .b{font-size:12.5pt}</style></head>
+<body>
+
+<div class="sampul">
+  <img src="logo-bf.png" alt="">
+  <h1>Buku Panduan Staf Kandang</h1>
+  <p class="sub">Cukup kirim pesan WhatsApp pendek ke nomor bot.<br>Bot yang mencatat, mengurus website, dan mengirim nota ke pembeli.</p>
+  <div class="no">Nomor bot (WhatsApp): 0878-9014-0532</div>
+  <p class="kecil">Versi Oktober 2026</p>
+</div>
+
+<h2><span class="n">1</span>Yang perlu Bapak tahu</h2>
+<ul>
+  <li><b>Bot</b> adalah "pegawai otomatis" di nomor WhatsApp <b>0878-9014-0532</b>. Simpan nomor ini di HP dengan nama <b>Bot Barokah Farm</b>.</li>
+  <li>Bapak cukup <b>mengetik perintah pendek</b> ke bot. Contohnya ada di buku ini dan boleh ditiru persis.</li>
+  <li>Bot selalu <b>membacakan ulang</b> perintah Bapak. Kalau benar, balas <span class="ketik">YA</span>. Kalau salah, balas <span class="ketik">batal</span> lalu ketik ulang.</li>
+  <li>Huruf besar atau kecil sama saja.</li>
+</ul>
+
+<h3>Arti kode-kode</h3>
+<table class="istilah">
+  <tr><td>K-01</td><td><b>K = Kambing</b>. Angka 01 = kelas/ukuran 1 (misalnya 20–25 kg). K-02 = kambing kelas 2, dan seterusnya.</td></tr>
+  <tr><td>D-01</td><td><b>D = Domba</b> kelas 1.</td></tr>
+  <tr><td>AQ-01</td><td><b>AQ = Aqiqah</b>. AQ-01 = paket aqiqah dimasak, AQ-02 = paket aqiqah dipotong.</td></tr>
+  <tr><td>QP / QK</td><td>Paket qurban (QP) dan kelas qurban (QK).</td></tr>
+  <tr><td>#12</td><td><b>Nomor pesanan</b>, seperti nomor nota. Setiap pembeli yang memesan lewat WhatsApp punya nomor sendiri. Saat mengetik, cukup tulis angkanya: <code>lunas 12</code>.</td></tr>
+  <tr><td>DP</td><td>Uang muka / tanda jadi.</td></tr>
+  <tr><td>Invoice</td><td>Nota resmi (file PDF) yang dikirim bot ke WhatsApp pembeli secara otomatis.</td></tr>
+</table>
+<div class="kotak kuning">Lupa kode? Ketik <span class="ketik">stok</span>. Bot mengirim daftar semua kode, nama, dan jumlah stoknya.</div>
+
+<div class="bab"></div>
+<h2><span class="n">2</span>Setiap pagi pukul 07.00</h2>
+<p>Bot mengirim <b>Rekap kandang</b> berisi:</p>
+<ul>
+  <li><b>Pesanan lunas yang harus disiapkan</b> untuk dikirim atau diambil.</li>
+  <li><b>Pesanan yang sudah DP:</b> ekornya disisihkan, jangan dijual ke orang lain.</li>
+  <li><b>Stok di website:</b> cocokkan dengan isi kandang. Ada yang beda? Betulkan dengan <code>stok K-01 24</code>.</li>
+</ul>
+
+<h2><span class="n">3</span>Pembeli datang dan membeli langsung di kandang</h2>
+<p>Pembeli <b>tidak memesan lewat WhatsApp</b>, tetapi datang, memilih, lalu membayar di kandang. <b>Setelah uangnya diterima</b>, ketik ke bot:</p>
+<div class="chat"><div class="judul">Contoh</div>
+  <div class="b saya"><small>Bapak</small>laku K-01 1 harga 1,6jt wa 0812 3456 7890 nama Pak Budi</div>
+  <div class="b bot"><small>Bot</small>📝 1 ekor K-01 laku di kandang seharga Rp1.600.000 (pembeli: Pak Budi). Stok dikurangi, masuk rekap keuangan, invoice dikirim ke WA 081234567890.<br>Balas <b>YA</b>…</div>
+  <div class="b saya"><small>Bapak</small>YA</div>
+  <div class="b bot"><small>Bot</small>✅ 1 ekor Kambing Jawa laku di kandang. Stok K-01 sekarang 9 ekor. Tercatat penjualan #15 Rp1.600.000. Invoice dikirim ke 6281234567890.</div>
+</div>
+<table>
+  <tr><th>Yang ditulis</th><th>Artinya</th></tr>
+  <tr><td class="k"><code>laku K-01</code></td><td>kode kambing/domba yang dibeli</td></tr>
+  <tr><td class="k"><code>1</code></td><td>berapa ekor</td></tr>
+  <tr><td class="k"><code>harga 1,6jt</code></td><td>TOTAL uang yang dibayar pembeli</td></tr>
+  <tr><td class="k"><code>wa 0812…</code></td><td>nomor WhatsApp pembeli, supaya pembeli dikirimi nota</td></tr>
+  <tr><td class="k"><code>nama Pak Budi</code></td><td>nama pembeli (boleh tidak ditulis)</td></tr>
+  <tr><td class="k"><code>ongkir 100rb</code></td><td>tulis hanya bila hewan diantar dan ada ongkir</td></tr>
+</table>
+<div class="kotak hijau">Otomatis: <b>stok di website berkurang</b>, uangnya <b>tercatat di laporan</b> admin, dan pembeli <b>menerima invoice</b> di WhatsApp-nya.</div>
+<div class="kotak merah"><b>Jangan lupa tulis harganya.</b> Kalau hanya <code>laku K-01 1</code>, stok tetap berkurang tetapi penjualan <b>tidak tercatat di keuangan</b> dan pembeli tidak mendapat nota.</div>
+
+<div class="bab"></div>
+<h2><span class="n">4</span>Pembeli yang sudah DP datang untuk melunasi</h2>
+<p>Pembeli ini sudah memesan lewat WhatsApp dan sudah membayar DP. Ia punya <b>nomor pesanan</b>, misalnya <b>#12</b>. Nomornya bisa dilihat:</p>
+<ul>
+  <li>di HP pembeli (pesan dari bot),</li>
+  <li>di rekap pagi, atau</li>
+  <li>dengan mengetik <span class="ketik">stok</span> (bagian "Pesanan aktif").</li>
+</ul>
+<ol class="langkah">
+  <li><b>Sepakati harga hewan</b> dengan pembeli, misalnya Rp1.500.000.</li>
+  <li><b>Kurangi dengan DP yang sudah dibayar.</b>
+    <div class="hitung">Rp1.500.000 − DP Rp100.000 = pembeli membayar <u>Rp1.400.000</u></div>
+    Tidak yakin berapa DP-nya? Lihat di pesan bot atau tanyakan admin.</li>
+  <li><b>Setelah uangnya diterima</b>, ketik:
+    <div class="chat"><div class="b saya"><small>Bapak</small>lunas 12 harga 1,5jt</div>
+      <div class="b bot"><small>Bot</small>📝 Tandai LUNAS pesanan #12 dengan harga hewan Rp1.500.000, gratis ongkir…</div><div class="b saya">YA</div>
+      <div class="b bot"><small>Bot</small>✅ #12: LUNAS. Total Rp1.500.000, DP Rp100.000, pelunasan Rp1.400.000. Invoice dikirim ke pembeli.</div></div></li>
+</ol>
+<table>
+  <tr><th>Keadaan</th><th>Ketik</th></tr>
+  <tr><td>Harga sama seperti pesanan, gratis ongkir</td><td><code>lunas 12</code></td></tr>
+  <tr><td>Harga berbeda</td><td><code>lunas 12 harga 1,5jt</code></td></tr>
+  <tr><td>Ada ongkir (jauh)</td><td><code>lunas 12 harga 1,5jt ongkir 100rb</code></td></tr>
+  <tr><td>Hewan dibawa sendiri oleh pembeli</td><td><code>lunas 12 harga 1,5jt diambil</code></td></tr>
+</table>
+<div class="kotak"><b>Cara menulis uang</b> (semua dimengerti): <code>1,5jt</code> · <code>1.500.000</code> · <code>1500000</code> · <code>150rb</code></div>
+
+<div class="bab"></div>
+<h2><span class="n">5</span>Perintah sehari-hari lainnya</h2>
+<table>
+  <tr><th>Keadaan</th><th>Ketik ke bot</th></tr>
+  <tr><td>Kambing/domba baru datang</td><td><code>tambah stok K-01 5</code></td></tr>
+  <tr><td>Hitung ulang, jumlah di website salah</td><td><code>stok K-01 24</code></td></tr>
+  <tr><td>Kelas sedang kosong</td><td><code>sembunyikan D-01</code> · ada lagi: <code>tampilkan D-01</code></td></tr>
+  <tr><td>Foto produk untuk website</td><td>kirim foto, beri tulisan <code>foto K-01</code></td></tr>
+  <tr><td>Foto kegiatan kandang</td><td>kirim foto + <code>galeri kambing makan pagi</code></td></tr>
+  <tr><td>Melihat stok &amp; pesanan</td><td><code>stok</code></td></tr>
+  <tr><td>Salah ketik / tidak jadi</td><td><code>batal</code></td></tr>
+  <tr><td>Lupa perintah</td><td><code>bantuan</code></td></tr>
+</table>
+<div class="kotak kuning"><b>Foto yang bagus:</b> siang hari, tempat terang, hewan utuh dari samping, satu foto untuk satu kode.</div>
+
+<h2><span class="n">6</span>Merekam video untuk media sosial</h2>
+<ol class="langkah">
+  <li>Ketik <span class="ketik">minta script mentahan</span>. Bot mengirim PDF berisi daftar adegan yang harus direkam dan kalimat yang diucapkan.</li>
+  <li>Rekam dengan <b>HP berdiri (tegak)</b>, dipegang dua tangan. Diam 2 detik sebelum dan sesudah bicara.</li>
+  <li>Kirim semua video ke admin, atau unggah ke Google Drive folder <b>1. Video Mentah</b>.</li>
+</ol>
+<div class="kotak merah"><b>Jangan merekam:</b>
+<ul>
+  <li>penyembelihan, darah, atau hewan yang diseret/diikat;</li>
+  <li>harga, DP, atau nomor WA yang diucapkan.</li>
+</ul>
+Aturan ini supaya akun TikTok, Instagram, dan Facebook Barokah Farm tidak diblokir.</div>
+
+<h2><span class="n">7</span>Yang hanya boleh dilakukan admin</h2>
+<p>Konfirmasi DP (<code>OK 12</code>), menolak bukti transfer, mengubah harga, flash sale, membatalkan pesanan, membalas pembeli, dan laporan keuangan. Kalau pembeli menanyakan hal-hal ini, arahkan ke admin <b>Bung Raja</b>.</p>
+<p class="kaki">Barokah Farm · Binong, Curug, Tangerang · sejak 2004</p>
+</body></html>
