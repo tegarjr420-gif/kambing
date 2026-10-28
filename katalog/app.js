@@ -33,13 +33,28 @@
   };
 
   /* ---------- produk ---------- */
-  const KAT = { Kambing: "Kambing", Domba: "Domba", Aqiqah: "Paket Aqiqah", Qurban: "Paket Qurban" };
+  const KAT = { Kambing: "Kambing", Domba: "Domba", Aqiqah: "Aqiqah", Qurban: "Qurban" };
+  // Sub-kelompok di dalam kategori, dibaca dari awal nama produk (diatur admin).
+  const GRUP = {
+    "Catering Aqiqah": "Memakai domba jantan yang memenuhi syarat untuk aqiqah.",
+    "Hewan Aqiqah + Potong": "Hewan aqiqah sudah termasuk potong.",
+    "Paket Pesta": "Paket pesta memakai domba betina.",
+    "Domba Qurban": "",
+    "Kambing Qurban": "",
+  };
+  function grupProduk(p) {
+    const n = String(p.nama || "");
+    if (p.kategori === "Aqiqah") return /^catering/i.test(n) ? "Catering Aqiqah" : /^paket pesta/i.test(n) ? "Paket Pesta" : "Hewan Aqiqah + Potong";
+    if (p.kategori === "Qurban") return /^domba/i.test(n) ? "Domba Qurban" : /^kambing/i.test(n) ? "Kambing Qurban" : "";
+    return "";
+  }
+  const berPaket = (p) => ["Catering Aqiqah", "Paket Pesta"].includes(grupProduk(p));
   const flashOn = (p) => !!(p.flash_harga && p.flash_sampai && new Date(p.flash_sampai) > new Date());
   const hargaNow = (p) => (flashOn(p) ? p.flash_harga : p.harga);
   const punyaOpsi = (p) => Array.isArray(p.opsi) && p.opsi.length > 0;
   const dihitung = (p) => p.stok !== null && p.stok !== undefined && !punyaOpsi(p);
   const habis = (p) => dihitung(p) && p.stok <= 0;
-  const satuan = (p) => (p.kategori === "Qurban" && p.isi_ekor > 1 ? "paket" : "ekor");
+  const satuan = (p) => (berPaket(p) || (p.kategori === "Qurban" && p.isi_ekor > 1) ? "paket" : "ekor");
   const PILIH = {}; // kode -> jumlah ekor/paket yang dipilih
 
   /* ---------- WhatsApp ---------- */
@@ -137,7 +152,12 @@
     const domba = p.kategori === "Domba" || /domba|garut|merino|texel|dorper/i.test(`${p.nama} ${p.ras || ""}`);
     const jantan = !/betina/i.test(p.kelamin || "");
     let body;
-    if (p.kategori === "Aqiqah" || p.kategori === "Qurban") {
+    if (berPaket(p)) {
+      // Catering & paket pesta memakai domba (jantan untuk aqiqah, betina untuk pesta)
+      body = `<g transform="translate(-70 18) scale(.78)">${animalSVG(p.kode + "a", true, jantan)}</g>
+              <g transform="translate(120 30) scale(.7)">${animalSVG(p.kode + "b", true, jantan)}</g>
+              <g transform="translate(40 52) scale(.82)"><ellipse cx="214" cy="257" rx="112" ry="9" fill="#000" opacity=".08"/>${animalSVG(p.kode + "c", true, jantan)}</g>`;
+    } else if (p.kategori === "Qurban" && !grupProduk(p)) {
       body = `<g transform="translate(-70 18) scale(.78)">${animalSVG(p.kode + "a", false, true)}</g>
               <g transform="translate(120 30) scale(.7)">${animalSVG(p.kode + "b", true, false)}</g>
               <g transform="translate(40 52) scale(.82)"><ellipse cx="214" cy="257" rx="112" ry="9" fill="#000" opacity=".08"/>${animalSVG(p.kode + "c", false, false)}</g>`;
@@ -304,6 +324,20 @@
     </article>`;
   }
 
+  // Kartu dengan judul sub-kelompok (mis. Catering Aqiqah, Paket Pesta) bila ada.
+  function perGrup(list) {
+    let html = "", cur = null;
+    for (const p of list) {
+      const g = grupProduk(p);
+      if (g && g !== cur) {
+        const c = GRUP[g];
+        html += `<h4 class="sub-grp">${esc(g)}${c ? `<small>${esc(c)}</small>` : ""}</h4>`;
+      }
+      cur = g;
+      html += card(p);
+    }
+    return html;
+  }
   function render() {
     const list = visible();
     const grouped = !F.kat && F.sort === "urut" && !F.q && !F.flash;
@@ -313,9 +347,10 @@
       for (const k of order) {
         const g = list.filter((p) => p.kategori === k);
         if (!g.length) continue;
-        html += `<h3 class="grp" id="grp-${k.toLowerCase()}">${KAT[k]}<span>${g.length} pilihan</span></h3>` + g.map(card).join("");
+        html += `<h3 class="grp" id="grp-${k.toLowerCase()}">${KAT[k]}<span>${g.length} pilihan</span></h3>` + perGrup(g);
       }
-    } else html = list.map(card).join("");
+    } else if (F.kat && F.sort === "urut" && !F.q && !F.flash) html = perGrup(list);
+    else html = list.map(card).join("");
     $("#grid").innerHTML = html;
     $("#empty").hidden = list.length > 0;
     const kosong = ALL.length === 0;
@@ -328,7 +363,7 @@
     const ekor = ALL.filter(dihitung).reduce((a, p) => a + Math.max(0, p.stok), 0);
     const paket = ALL.filter((p) => p.kategori === "Aqiqah" || p.kategori === "Qurban").length;
     const fl = ALL.filter(flashOn).length;
-    $("#live-text").textContent = [ekor ? `${ekor} ekor siap dibawa pulang` : "", paket ? `${paket} paket aqiqah & qurban` : "", fl ? `${fl} flash sale` : ""].filter(Boolean).join(" · ") || "Tanya admin untuk stok terbaru";
+    $("#live-text").textContent = [ekor ? `${ekor} ekor siap dibawa pulang` : "", paket ? `${paket} pilihan aqiqah & qurban` : "", fl ? `${fl} flash sale` : ""].filter(Boolean).join(" · ") || "Tanya admin untuk stok terbaru";
     const last = ALL.map((k) => k.updated_at).filter(Boolean).sort().pop();
     $("#updated").textContent = last ? `Diperbarui ${relTime(last)}` : "";
     $("#notice-contoh").hidden = !META.contoh;
@@ -360,7 +395,7 @@
   function fillDetail(p) {
     const b = beratTxt(p);
     $("#d-tag").textContent = p.kode;
-    $("#d-kat").textContent = KAT[p.kategori] || p.kategori;
+    $("#d-kat").textContent = grupProduk(p) || KAT[p.kategori] || p.kategori;
     $("#d-title").textContent = p.nama;
     $("#d-desc").hidden = !p.deskripsi;
     $("#d-desc").textContent = p.deskripsi || "";
